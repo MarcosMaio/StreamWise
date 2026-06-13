@@ -3,6 +3,18 @@ alwaysApply: true
 ---
 
 <!-- SPECKIT START -->
-For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the current plan
+For additional context about technologies, project structure, shell commands, and implementation details, read:
+
+- **Implementation plan**: `specs/001-streamwise/plan.md`
+- **Data model**: `specs/001-streamwise/data-model.md`
+- **API contract**: `specs/001-streamwise/contracts/openapi.yaml`
+- **Research decisions**: `specs/001-streamwise/research.md`
+- **Local setup**: `specs/001-streamwise/quickstart.md`
+- **Feature spec**: `specs/001-streamwise/spec.md`
+- **Constitution**: `.specify/memory/constitution.md`
+- **Product planning**: `docs/STREAMWISE-PLANNING.md`
+
+**Stack (MVP)**: FastAPI + PostgreSQL/pgvector + Next.js + TensorFlow Two-Tower + TMDB sync + MovieLens training.
+
+**Branch**: `001-streamwise`
 <!-- SPECKIT END -->

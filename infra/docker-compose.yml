@@ -1,0 +1,71 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: streamwise-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-streamwise}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-streamwise}
+      POSTGRES_DB: ${POSTGRES_DB:-streamwise}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-streamwise} -d ${POSTGRES_DB:-streamwise}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ../apps/api
+      dockerfile: Dockerfile
+    container_name: streamwise-api
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-streamwise}:${POSTGRES_PASSWORD:-streamwise}@postgres:5432/${POSTGRES_DB:-streamwise}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ../apps/api:/app
+      - ../ml/artifacts:/app/ml/artifacts:ro
+
+  web:
+    build:
+      context: ../apps/web
+      dockerfile: Dockerfile
+    container_name: streamwise-web
+    env_file:
+      - .env
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+  scheduler:
+    build:
+      context: ../apps/api
+      dockerfile: Dockerfile
+    container_name: streamwise-scheduler
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-streamwise}:${POSTGRES_PASSWORD:-streamwise}@postgres:5432/${POSTGRES_DB:-streamwise}
+    command: ["python", "/jobs/tmdb_sync/scheduler.py"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ../jobs/tmdb_sync:/jobs/tmdb_sync:ro
+    profiles:
+      - scheduler
+
+volumes:
+  postgres_data:

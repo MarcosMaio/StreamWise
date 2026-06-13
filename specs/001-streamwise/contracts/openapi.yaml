@@ -1,0 +1,609 @@
+openapi: 3.1.0
+info:
+  title: StreamWise API
+  version: 0.1.0
+  description: |
+    REST API for StreamWise — movie/series discovery, interactions, and personalized recommendations.
+    Brazil (BR) streaming availability. See specs/001-streamwise/plan.md for architecture.
+
+servers:
+  - url: http://localhost:8000
+    description: Local development
+
+tags:
+  - name: auth
+  - name: catalog
+  - name: titles
+  - name: users
+  - name: interactions
+  - name: recommendations
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        "200":
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /auth/register:
+    post:
+      tags: [auth]
+      summary: Register with email and password
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "409":
+          description: Email already registered
+
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Login with email and password
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+
+  /auth/oauth/google:
+    post:
+      tags: [auth]
+      summary: Exchange Google OAuth token for StreamWise JWT
+      operationId: googleOAuth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id_token]
+              properties:
+                id_token:
+                  type: string
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /catalog/trending:
+    get:
+      tags: [catalog]
+      summary: Trending movies and series
+      operationId: getTrending
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [movie, series, all]
+            default: all
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 50
+      responses:
+        "200":
+          description: Trending titles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TitleListResponse"
+
+  /catalog/new:
+    get:
+      tags: [catalog]
+      summary: New releases and on-air series
+      operationId: getNewReleases
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: New titles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TitleListResponse"
+
+  /titles/{titleId}:
+    get:
+      tags: [titles]
+      summary: Title detail with streaming availability
+      operationId: getTitle
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/titleId"
+      responses:
+        "200":
+          description: Title detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TitleDetail"
+        "404":
+          description: Title not found
+
+  /titles/{titleId}/similar:
+    get:
+      tags: [recommendations]
+      summary: Titles similar to the given title
+      operationId: getSimilarTitles
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/titleId"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: provider_ids
+          in: query
+          description: Filter by streaming provider UUIDs
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+          style: form
+          explode: true
+      responses:
+        "200":
+          description: Similar titles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TitleListResponse"
+
+  /titles/{titleId}/interactions:
+    post:
+      tags: [interactions]
+      summary: Record user interaction on a title
+      operationId: createInteraction
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/titleId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InteractionRequest"
+      responses:
+        "201":
+          description: Interaction recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InteractionResponse"
+        "404":
+          description: Title not found
+
+  /recommendations/for-you:
+    get:
+      tags: [recommendations]
+      summary: Personalized recommendation feed
+      operationId: getForYouFeed
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: provider_ids
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+          style: form
+          explode: true
+      responses:
+        "200":
+          description: Ranked recommendations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecommendationListResponse"
+
+  /catalog/search:
+    get:
+      tags: [catalog]
+      summary: Natural language / keyword title search
+      operationId: searchTitles
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: provider_ids
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+          style: form
+          explode: true
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TitleListResponse"
+
+  /users/me:
+    get:
+      tags: [users]
+      summary: Current user profile
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  /users/me/preferences:
+    put:
+      tags: [users]
+      summary: Save onboarding preferences (genres, streaming services, seed likes)
+      operationId: updatePreferences
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PreferencesRequest"
+      responses:
+        "200":
+          description: Preferences saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  /users/me/likes:
+    get:
+      tags: [users]
+      summary: List user liked titles
+      operationId: getUserLikes
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Liked titles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TitleListResponse"
+
+  /users/me/watchlist:
+    get:
+      tags: [users]
+      summary: List user watchlist titles
+      operationId: getUserWatchlist
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Watchlist titles (interactions with event_type watchlist)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TitleListResponse"
+
+  /users/me/affinity:
+    get:
+      tags: [users]
+      summary: Inferred streaming service affinity
+      operationId: getStreamingAffinity
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Provider affinity scores
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  providers:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/StreamingAffinity"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    titleId:
+      name: titleId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [email, password, display_name]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        display_name:
+          type: string
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          example: bearer
+        user:
+          $ref: "#/components/schemas/UserProfile"
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        display_name:
+          type: string
+        country_code:
+          type: string
+          example: BR
+        onboarding_complete:
+          type: boolean
+        genre_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        streaming_provider_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    PreferencesRequest:
+      type: object
+      required: [genre_ids, streaming_provider_ids]
+      properties:
+        genre_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        streaming_provider_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        seed_like_title_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    TitleSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tmdb_id:
+          type: integer
+        type:
+          type: string
+          enum: [movie, series]
+        title:
+          type: string
+        overview:
+          type: string
+        release_date:
+          type: string
+          format: date
+        poster_url:
+          type: string
+        streamwise_avg_rating:
+          type: number
+          nullable: true
+        like_count:
+          type: integer
+        genres:
+          type: array
+          items:
+            type: string
+        streaming_providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/StreamingProviderBadge"
+
+    TitleDetail:
+      allOf:
+        - $ref: "#/components/schemas/TitleSummary"
+        - type: object
+          properties:
+            tmdb_popularity:
+              type: number
+            is_trending:
+              type: boolean
+            availability_note:
+              type: string
+              nullable: true
+              description: Shown when sync data is stale (>24h)
+
+    StreamingProviderBadge:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        logo_url:
+          type: string
+        availability_type:
+          type: string
+          enum: [flatrate, rent, buy]
+
+    TitleListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TitleSummary"
+        total:
+          type: integer
+
+    InteractionRequest:
+      type: object
+      required: [event_type]
+      properties:
+        event_type:
+          type: string
+          enum: [like, dislike, rating, watchlist, watched]
+        rating:
+          type: number
+          minimum: 1
+          maximum: 5
+          description: Required when event_type is rating
+
+    InteractionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+        title:
+          $ref: "#/components/schemas/TitleSummary"
+
+    RecommendationItem:
+      allOf:
+        - $ref: "#/components/schemas/TitleSummary"
+        - type: object
+          properties:
+            score:
+              type: number
+              format: float
+            reason_tags:
+              type: array
+              items:
+                type: string
+              description: P1 explainability; may be empty in MVP
+
+    RecommendationListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecommendationItem"
+        fallback_used:
+          type: boolean
+          description: True when trending fallback was used instead of ML ranker
+
+    StreamingAffinity:
+      type: object
+      properties:
+        provider_id:
+          type: string
+          format: uuid
+        provider_name:
+          type: string
+        score:
+          type: number
+          format: float

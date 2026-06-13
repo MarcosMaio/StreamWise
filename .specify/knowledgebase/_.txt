@@ -1,0 +1,58 @@
+Spec Kit. Build high-quality software faster. An open source toolkit that allows you to focus on product scenarios and predictable outcomes instead of vibe coding every piece from scratch.
+
+What is Spec-Driven Development?
+Spec-Driven Development flips the script on traditional software development. For decades, code has been king, specifications were just scaffolding we built and discarded once the real work of coding began. Spec-Driven Development changes this: specifications become executable, directly generating working implementations rather than just guiding them.
+
+Get Started
+
+1. Install Specify CLI. Requires uv. Replace vX.Y.Z with the latest tag from Releases. Run the command: uv tool install specify-cli --from git+[https://github.com/github/spec-kit.git@vX.Y.Z](https://github.com/github/spec-kit.git@vX.Y.Z).
+2. Initialize a project. Run the commands: specify init my-project --integration copilot, and then enter the folder cd my-project.
+3. Establish project principles. Launch your coding agent in the project directory. Most agents expose spec-kit as /speckit slash commands. Use the /speckit.constitution command to create your project's governing principles and development guidelines that will guide all subsequent development.
+4. Create the spec. Use the /speckit.specify command to describe what you want to build. Focus on the what and why, not the tech stack.
+5. Create a technical implementation plan. Use the /speckit.plan command to provide your tech stack and architecture choices.
+6. Break down into tasks. Use /speckit.tasks to create an actionable task list from your implementation plan.
+7. Execute implementation. Use /speckit.implement to execute all tasks and build your feature according to the plan.
+
+Community
+Explore community-contributed resources on the Spec Kit docs site, including Extensions (commands, hooks, and capabilities), Presets (template and terminology overrides), Walkthroughs (end-to-end SDD scenarios), and Friends (projects that extend or build on Spec Kit). Note that community contributions are independently created and maintained by their respective authors.
+
+Supported AI Coding Agent Integrations
+Spec Kit works with 30+ AI coding agents, both CLI tools and IDE-based assistants. Run specify integration list to see all available integrations in your installed version.
+
+Available Slash Commands
+After running specify init, your AI coding agent will have access to these slash commands for structured development.
+Core Commands:
+/speckit.constitution - Create or update project governing principles and development guidelines.
+/speckit.specify - Define what you want to build.
+/speckit.plan - Create technical implementation plans with your chosen tech stack.
+/speckit.tasks - Generate actionable task lists for implementation.
+/speckit.taskstoissues - Convert generated task lists into GitHub issues.
+/speckit.implement - Execute all tasks to build the feature according to the plan.
+
+Optional Commands:
+/speckit.clarify - Clarify underspecified areas.
+/speckit.analyze - Cross-artifact consistency and coverage analysis.
+/speckit.checklist - Generate custom quality checklists that validate requirements.
+
+Making Spec Kit Your Own: Extensions & Presets
+Spec Kit can be tailored to your needs through extensions, presets, and project-local overrides. Templates are resolved at runtime. Extensions add new capabilities like new commands and templates. Presets customize existing workflows by overriding templates to change how Spec Kit works without adding new capabilities.
+
+Core Philosophy
+Spec-Driven Development is a structured process that emphasizes intent-driven development where specifications define the what before the how, rich specification creation, multi-step refinement rather than one-shot code generation, and heavy reliance on advanced AI model capabilities.
+
+Development Phases
+0-to-1 Development (Greenfield): Generate from scratch starting with high-level requirements.
+Creative Exploration: Parallel implementations to explore diverse solutions and tech stacks.
+Iterative Enhancement (Brownfield): Add features iteratively and modernize legacy systems.
+
+Experimental Goals
+Technology independence, enterprise constraints (incorporating organizational constraints and compliance), user-centric development, and creative and iterative processes.
+
+Prerequisites
+Linux/macOS/Windows, a supported AI coding agent, uv or pipx for package management, Python 3.11+, and Git.
+
+Detailed Process Walkthrough
+You can use the Specify CLI to bootstrap your project. Step 1 is to establish project principles using /speckit.constitution. Step 2 is to create project specifications using /speckit.specify. Step 3 requires functional specification clarification before planning, using /speckit.clarify. Step 4 is to generate a plan using /speckit.plan. Step 5 is to have the AI validate the plan. Step 6 is to generate a task breakdown using /speckit.tasks. Step 7 is to execute the implementation using /speckit.implement. The agent will execute local CLI commands, so ensure you have the required tools installed on your machine.
+
+Support, Acknowledgements and License
+For support, open a GitHub issue. This project is heavily influenced by the work of John Lam. It is licensed under the terms of the MIT open source license.
