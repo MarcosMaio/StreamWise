@@ -1,4 +1,5 @@
 services:
+  # ── Data ──────────────────────────────────────────────────────────────────
   postgres:
     image: pgvector/pgvector:pg16
     container_name: streamwise-postgres
@@ -7,7 +8,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-streamwise}
       POSTGRES_DB: ${POSTGRES_DB:-streamwise}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -16,7 +17,29 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - streamwise
 
+  # ── One-shot DB init (migrations + seed) ──────────────────────────────────
+  migrate:
+    build:
+      context: ../apps/api
+      dockerfile: Dockerfile
+    container_name: streamwise-migrate
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-streamwise}:${POSTGRES_PASSWORD:-streamwise}@postgres:5432/${POSTGRES_DB:-streamwise}
+    command: >
+      sh -c "alembic upgrade head && python scripts/seed_genres_providers.py"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - streamwise
+
+  # ── REST API ───────────────────────────────────────────────────────────────
   api:
     build:
       context: ../apps/api
@@ -27,45 +50,113 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-streamwise}:${POSTGRES_PASSWORD:-streamwise}@postgres:5432/${POSTGRES_DB:-streamwise}
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8000}:8000"
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     volumes:
-      - ../apps/api:/app
       - ../ml/artifacts:/app/ml/artifacts:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - streamwise
 
+  # ── Web UI ─────────────────────────────────────────────────────────────────
   web:
     build:
       context: ../apps/web
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     container_name: streamwise-web
-    env_file:
-      - .env
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     ports:
-      - "3000:3000"
+      - "${WEB_PORT:-3000}:3000"
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+    networks:
+      - streamwise
 
+  # ── TMDB sync scheduler (daily 06:00 UTC) ─────────────────────────────────
   scheduler:
     build:
-      context: ../apps/api
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: jobs/tmdb_sync/Dockerfile
     container_name: streamwise-scheduler
     env_file:
       - .env
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-streamwise}:${POSTGRES_PASSWORD:-streamwise}@postgres:5432/${POSTGRES_DB:-streamwise}
-    command: ["python", "/jobs/tmdb_sync/scheduler.py"]
+      SYNC_STATUS_DIR: /var/lib/streamwise/sync
+    volumes:
+      - tmdb_sync_status:/var/lib/streamwise/sync
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    networks:
+      - streamwise
+
+  # ── One-shot TMDB catalog sync (first load / manual refresh) ───────────────
+  sync:
+    build:
+      context: ..
+      dockerfile: jobs/tmdb_sync/Dockerfile
+    container_name: streamwise-sync
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-streamwise}:${POSTGRES_PASSWORD:-streamwise}@postgres:5432/${POSTGRES_DB:-streamwise}
+      SYNC_STATUS_DIR: /var/lib/streamwise/sync
+    command: ["python", "sync_catalog.py"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     volumes:
-      - ../jobs/tmdb_sync:/jobs/tmdb_sync:ro
+      - tmdb_sync_status:/var/lib/streamwise/sync
+    restart: "no"
     profiles:
-      - scheduler
+      - init
+    networks:
+      - streamwise
+
+  # ── API test runner (optional) ─────────────────────────────────────────────
+  test-api:
+    build:
+      context: ../apps/api
+      dockerfile: Dockerfile
+    container_name: streamwise-test-api
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-streamwise}:${POSTGRES_PASSWORD:-streamwise}@postgres:5432/${POSTGRES_DB:-streamwise}
+    command: ["python", "-m", "pytest", "tests/", "-v"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    profiles:
+      - test
+    networks:
+      - streamwise
+
+networks:
+  streamwise:
+    name: streamwise
 
 volumes:
   postgres_data:
+  tmdb_sync_status:

@@ -75,17 +75,17 @@
 **Independent Test**: Register → logout → login → access protected `/users/me`  
 **Spec**: US1 | **Planning**: P0 auth
 
-- [ ] T035 [P] [US1] Create Pydantic schemas in `apps/api/app/schemas/auth.py` (RegisterRequest, LoginRequest, AuthResponse)
-- [ ] T036 [P] [US1] Implement password hashing utilities in `apps/api/app/core/security.py`
-- [ ] T037 [P] [US1] Implement JWT create/verify in `apps/api/app/core/jwt.py`
-- [ ] T038 [US1] Implement `AuthService` in `apps/api/app/services/auth_service.py`
-- [ ] T039 [US1] Implement auth router `apps/api/app/routers/auth.py` (`POST /auth/register`, `POST /auth/login`)
-- [ ] T040 [US1] Add `get_current_user` dependency in `apps/api/app/dependencies/auth.py`
-- [ ] T041 [US1] Implement `POST /auth/oauth/google` in `apps/api/app/routers/auth.py` with token exchange
-- [ ] T042 [P] [US1] Create Next.js auth pages `apps/web/src/app/(auth)/login/page.tsx` and `register/page.tsx`
-- [ ] T043 [P] [US1] Configure NextAuth or JWT cookie storage in `apps/web/src/lib/auth.ts`
-- [ ] T044 [US1] Add auth middleware protecting routes in `apps/web/src/middleware.ts`
-- [ ] T045 [US1] Integration test `apps/api/tests/integration/test_auth.py` for register/login flow
+- [x] T035 [P] [US1] Create Pydantic schemas in `apps/api/app/schemas/auth.py` (RegisterRequest, LoginRequest, AuthResponse)
+- [x] T036 [P] [US1] Implement password hashing utilities in `apps/api/app/core/security.py`
+- [x] T037 [P] [US1] Implement JWT create/verify in `apps/api/app/core/jwt.py`
+- [x] T038 [US1] Implement `AuthService` in `apps/api/app/services/auth_service.py`
+- [x] T039 [US1] Implement auth router `apps/api/app/routers/auth.py` (`POST /auth/register`, `POST /auth/login`)
+- [x] T040 [US1] Add `get_current_user` dependency in `apps/api/app/dependencies/auth.py`
+- [x] T041 [US1] Implement `POST /auth/oauth/google` in `apps/api/app/routers/auth.py` with token exchange
+- [x] T042 [P] [US1] Create Next.js auth pages `apps/web/src/app/(auth)/login/page.tsx` and `register/page.tsx`
+- [x] T043 [P] [US1] Configure NextAuth or JWT cookie storage in `apps/web/src/lib/auth.ts`
+- [x] T044 [US1] Add auth middleware protecting routes in `apps/web/src/middleware.ts`
+- [x] T045 [US1] Integration test `apps/api/tests/integration/test_auth.py` for register/login flow
 
 **Checkpoint**: User can register and login via UI and API
 
@@ -97,18 +97,18 @@
 **Independent Test**: After sync, `GET /catalog/trending` returns titles; home UI shows sections  
 **Spec**: US2 | **Planning**: §12 Phase 2 — Live catalog
 
-- [ ] T046 [P] [US2] Implement TMDB HTTP client in `apps/api/app/services/tmdb_client.py` (trending, now_playing, on_the_air, details, watch/providers)
-- [ ] T047 [US2] Implement catalog upsert logic in `apps/api/app/services/catalog_service.py`
-- [ ] T048 [US2] Create sync script `jobs/tmdb_sync/sync_catalog.py` (trending, new releases, providers BR, upsert titles)
-- [ ] T049 [US2] Create scheduler entry `jobs/tmdb_sync/scheduler.py` and wire in `infra/docker-compose.yml` scheduler service (daily 06:00 UTC)
-- [ ] T050 [US2] Add stale-data flag logic when `last_synced_at` > 24h in `apps/api/app/services/catalog_service.py`
-- [ ] T176 [US2] Add TMDB sync health metrics and success-rate logging in `jobs/tmdb_sync/sync_catalog.py` and `jobs/tmdb_sync/scheduler.py` (SC-006: track ≥95% daily success; expose last run status for ops)
-- [ ] T051 [P] [US2] Implement `GET /catalog/trending` in `apps/api/app/routers/catalog.py`
-- [ ] T052 [P] [US2] Implement `GET /catalog/new` in `apps/api/app/routers/catalog.py`
-- [ ] T053 [P] [US2] Create Pydantic schemas in `apps/api/app/schemas/title.py` (TitleSummary, TitleListResponse)
-- [ ] T054 [P] [US2] Create home page `apps/web/src/app/(main)/page.tsx` with Trending and New Releases sections
-- [ ] T055 [P] [US2] Create reusable `apps/web/src/components/TitleCard.tsx` (poster, name, type badge)
-- [ ] T056 [US2] Integration test `apps/api/tests/integration/test_catalog.py` for trending endpoint after mock sync
+- [x] T046 [P] [US2] Implement TMDB HTTP client in `apps/api/app/services/tmdb_client.py` (trending, now_playing, on_the_air, details, watch/providers)
+- [x] T047 [US2] Implement catalog upsert logic in `apps/api/app/services/catalog_service.py`
+- [x] T048 [US2] Create sync script `jobs/tmdb_sync/sync_catalog.py` (trending, new releases, providers BR, upsert titles)
+- [x] T049 [US2] Create scheduler entry `jobs/tmdb_sync/scheduler.py` and wire in `infra/docker-compose.yml` scheduler service (daily 06:00 UTC)
+- [x] T050 [US2] Add stale-data flag logic when `last_synced_at` > 24h in `apps/api/app/services/catalog_service.py`
+- [x] T176 [US2] Add TMDB sync health metrics and success-rate logging in `jobs/tmdb_sync/sync_catalog.py` and `jobs/tmdb_sync/scheduler.py` (SC-006: track ≥95% daily success; expose last run status for ops)
+- [x] T051 [P] [US2] Implement `GET /catalog/trending` in `apps/api/app/routers/catalog.py`
+- [x] T052 [P] [US2] Implement `GET /catalog/new` in `apps/api/app/routers/catalog.py`
+- [x] T053 [P] [US2] Create Pydantic schemas in `apps/api/app/schemas/title.py` (TitleSummary, TitleListResponse)
+- [x] T054 [P] [US2] Create home page `apps/web/src/app/(main)/page.tsx` with Trending and New Releases sections
+- [x] T055 [P] [US2] Create reusable `apps/web/src/components/TitleCard.tsx` (poster, name, type badge)
+- [x] T056 [US2] Integration test `apps/api/tests/integration/test_catalog.py` for trending endpoint after mock sync
 
 **Checkpoint**: Daily sync populates DB; home displays trending and new release rows
 
@@ -120,14 +120,14 @@
 **Independent Test**: New user completes onboarding; preferences persist on profile  
 **Spec**: US3 | **Planning**: P0 onboarding
 
-- [ ] T057 [P] [US3] Create Pydantic schema `PreferencesRequest` in `apps/api/app/schemas/user.py`
-- [ ] T058 [US3] Implement `UserPreferenceService` in `apps/api/app/services/user_preference_service.py`
-- [ ] T059 [US3] Implement `PUT /users/me/preferences` in `apps/api/app/routers/users.py`
-- [ ] T060 [US3] Set `onboarding_complete` flag and seed initial `user_streaming_affinity` from declared providers
-- [ ] T061 [P] [US3] Create onboarding flow `apps/web/src/app/onboarding/page.tsx` (genre multi-select, provider multi-select)
-- [ ] T062 [P] [US3] Create optional seed title picker step in `apps/web/src/app/onboarding/seed-titles/page.tsx`
-- [ ] T063 [US3] Redirect new users without `onboarding_complete` to onboarding via `apps/web/src/middleware.ts`
-- [ ] T064 [US3] Integration test `apps/api/tests/integration/test_onboarding.py`
+- [x] T057 [P] [US3] Create Pydantic schema `PreferencesRequest` in `apps/api/app/schemas/user.py`
+- [x] T058 [US3] Implement `UserPreferenceService` in `apps/api/app/services/user_preference_service.py`
+- [x] T059 [US3] Implement `PUT /users/me/preferences` in `apps/api/app/routers/users.py`
+- [x] T060 [US3] Set `onboarding_complete` flag and seed initial `user_streaming_affinity` from declared providers
+- [x] T061 [P] [US3] Create onboarding flow `apps/web/src/app/onboarding/page.tsx` (genre multi-select, provider multi-select)
+- [x] T062 [P] [US3] Create optional seed title picker step in `apps/web/src/app/onboarding/seed-titles/page.tsx`
+- [x] T063 [US3] Redirect new users without `onboarding_complete` to onboarding via `apps/web/src/middleware.ts`
+- [x] T064 [US3] Integration test `apps/api/tests/integration/test_onboarding.py`
 
 **Checkpoint**: New user must complete onboarding before personalized feed
 
@@ -139,12 +139,12 @@
 **Independent Test**: Open title → see overview, StreamWise rating, Netflix/Prime badges  
 **Spec**: US4 | **Planning**: P0 catalog detail
 
-- [ ] T065 [US4] Implement `GET /titles/{titleId}` in `apps/api/app/routers/titles.py` with providers and aggregates
-- [ ] T066 [P] [US4] Extend `TitleDetail` schema in `apps/api/app/schemas/title.py` with availability_note, streaming_providers
-- [ ] T067 [P] [US4] Create detail page `apps/web/src/app/titles/[id]/page.tsx`
-- [ ] T068 [P] [US4] Create `apps/web/src/components/StreamingBadges.tsx` for flatrate provider logos
-- [ ] T069 [P] [US4] Create `apps/web/src/components/CommunityRating.tsx` (avg rating + like count)
-- [ ] T070 [US4] Handle empty availability state with explicit messaging in `apps/web/src/app/titles/[id]/page.tsx`
+- [x] T065 [US4] Implement `GET /titles/{titleId}` in `apps/api/app/routers/titles.py` with providers and aggregates
+- [x] T066 [P] [US4] Extend `TitleDetail` schema in `apps/api/app/schemas/title.py` with availability_note, streaming_providers
+- [x] T067 [P] [US4] Create detail page `apps/web/src/app/titles/[id]/page.tsx`
+- [x] T068 [P] [US4] Create `apps/web/src/components/StreamingBadges.tsx` for flatrate provider logos
+- [x] T069 [P] [US4] Create `apps/web/src/components/CommunityRating.tsx` (avg rating + like count)
+- [x] T070 [US4] Handle empty availability state with explicit messaging in `apps/web/src/app/titles/[id]/page.tsx`
 
 **Checkpoint**: Title detail shows metadata and where to watch in Brazil
 
@@ -156,14 +156,14 @@
 **Independent Test**: Like + rate title → aggregates update → persist after refresh  
 **Spec**: US5 | **Planning**: §12 Phase 3 — Interactions
 
-- [ ] T071 [P] [US5] Create Pydantic schemas in `apps/api/app/schemas/interaction.py`
-- [ ] T072 [US5] Implement `InteractionService` in `apps/api/app/services/interaction_service.py` (upsert, mutual exclusivity like/dislike)
-- [ ] T073 [US5] Implement aggregate updater for `like_count`, `streamwise_avg_rating` in `apps/api/app/services/title_aggregate_service.py`
-- [ ] T074 [US5] Implement `POST /titles/{titleId}/interactions` in `apps/api/app/routers/interactions.py`
-- [ ] T075 [US5] Trigger `user_streaming_affinity` recompute in `apps/api/app/services/affinity_service.py` after likes
-- [ ] T076 [P] [US5] Add interaction buttons component `apps/web/src/components/InteractionBar.tsx` (like, dislike, rate, watchlist, watched)
-- [ ] T077 [US5] Wire `InteractionBar` into `apps/web/src/app/titles/[id]/page.tsx`
-- [ ] T078 [US5] Integration test `apps/api/tests/integration/test_interactions.py`
+- [x] T071 [P] [US5] Create Pydantic schemas in `apps/api/app/schemas/interaction.py`
+- [x] T072 [US5] Implement `InteractionService` in `apps/api/app/services/interaction_service.py` (upsert, mutual exclusivity like/dislike)
+- [x] T073 [US5] Implement aggregate updater for `like_count`, `streamwise_avg_rating` in `apps/api/app/services/title_aggregate_service.py`
+- [x] T074 [US5] Implement `POST /titles/{titleId}/interactions` in `apps/api/app/routers/interactions.py`
+- [x] T075 [US5] Trigger `user_streaming_affinity` recompute in `apps/api/app/services/affinity_service.py` after likes
+- [x] T076 [P] [US5] Add interaction buttons component `apps/web/src/components/InteractionBar.tsx` (like, dislike, rate, watchlist, watched)
+- [x] T077 [US5] Wire `InteractionBar` into `apps/web/src/app/titles/[id]/page.tsx`
+- [x] T078 [US5] Integration test `apps/api/tests/integration/test_interactions.py`
 
 **Checkpoint**: Interactions persist and update community aggregates
 
@@ -175,13 +175,13 @@
 **Independent Test**: Similar titles API returns genre-related neighbors  
 **Planning ref**: §12 Phase 4 — Vector search, P0 similar search
 
-- [ ] T079 [ML] Add `sentence-transformers` to `ml/training/pyproject.toml` or `apps/api/pyproject.toml` dev deps
-- [ ] T080 [ML] Create embedding generator `ml/training/generate_embeddings.py` (overview → content_vector 384d)
-- [ ] T081 [ML] Batch embed all titles and upsert `title_embeddings.content_vector` with IVFFlat index creation script
-- [ ] T082 Implement vector search queries in `apps/api/app/services/vector_search_service.py` (cosine similarity, top-K)
-- [ ] T083 [US8] Implement `GET /titles/{titleId}/similar` in `apps/api/app/routers/titles.py` using vector search
-- [ ] T084 [P] [US8] Add "More like this" section in `apps/web/src/app/titles/[id]/page.tsx`
-- [ ] T085 Hook embedding generation into `jobs/tmdb_sync/sync_catalog.py` for new titles with overview text
+- [x] T079 [ML] Add `sentence-transformers` to `ml/training/pyproject.toml` or `apps/api/pyproject.toml` dev deps
+- [x] T080 [ML] Create embedding generator `ml/training/generate_embeddings.py` (overview → content_vector 384d)
+- [x] T081 [ML] Batch embed all titles and upsert `title_embeddings.content_vector` with IVFFlat index creation script
+- [x] T082 Implement vector search queries in `apps/api/app/services/vector_search_service.py` (cosine similarity, top-K)
+- [x] T083 [US8] Implement `GET /titles/{titleId}/similar` in `apps/api/app/routers/titles.py` using vector search
+- [x] T084 [P] [US8] Add "More like this" section in `apps/web/src/app/titles/[id]/page.tsx`
+- [x] T085 Hook embedding generation into `jobs/tmdb_sync/sync_catalog.py` for new titles with overview text
 
 **Checkpoint**: Similar titles work for embedded catalog entries
 
@@ -193,21 +193,21 @@
 **Independent Test**: User with ≥5 likes receives ≥10 personalized titles excluding watched/disliked (SC-003)  
 **Spec**: US6 | **Planning**: §12 Phase 5 — Neural model, P0 hybrid feed
 
-- [ ] T086 [ML] Create MovieLens import script `ml/training/import_movielens.py` (ratings, movies, links → DB / parquet)
-- [ ] T087 [ML] Create training config `ml/training/config.yaml` (batch size, epochs, embedding dims, sample size for dev)
-- [ ] T088 [ML] Implement Two-Tower model in `ml/training/two_tower_model.py` (user tower + item tower)
-- [ ] T089 [ML] Implement training script `ml/training/train_two_tower.py` with binary labels (rating ≥4 / ≤2)
-- [ ] T090 [ML] Export model artifact to `ml/artifacts/two_tower/v1/` and register in `model_versions` table
-- [ ] T091 [ML] Generate `model_vector` item embeddings post-train in `ml/training/export_item_embeddings.py`
-- [ ] T092 Implement model loader in `apps/api/app/services/model_loader.py` (active version from `model_versions`)
-- [ ] T093 Implement `RecommendationService` in `apps/api/app/services/recommendation_service.py` (retrieval top-200 → rank → streaming boost α=0.3)
-- [ ] T094 Implement candidate filtering (exclude watched/disliked) in `apps/api/app/services/recommendation_service.py`
-- [ ] T095 Implement cold-start path using onboarding genres + vector search in `apps/api/app/services/recommendation_service.py`
-- [ ] T096 Implement trending fallback when model unavailable in `apps/api/app/services/recommendation_service.py`
-- [ ] T097 [US6] Implement `GET /recommendations/for-you` in `apps/api/app/routers/recommendations.py`
-- [ ] T098 [P] [US6] Create "For you" feed section in `apps/web/src/app/(main)/page.tsx`
-- [ ] T099 [P] [US6] Create `apps/web/src/components/RecommendationFeed.tsx` with loading and fallback states
-- [ ] T100 [US6] Integration test `apps/api/tests/integration/test_recommendations.py` with seeded user (≥5 likes per SC-003)
+- [x] T086 [ML] Create MovieLens import script `ml/training/import_movielens.py` (ratings, movies, links → DB / parquet)
+- [x] T087 [ML] Create training config `ml/training/config.yaml` (batch size, epochs, embedding dims, sample size for dev)
+- [x] T088 [ML] Implement Two-Tower model in `ml/training/two_tower_model.py` (user tower + item tower)
+- [x] T089 [ML] Implement training script `ml/training/train_two_tower.py` with binary labels (rating ≥4 / ≤2)
+- [x] T090 [ML] Export model artifact to `ml/artifacts/two_tower/v1/` and register in `model_versions` table
+- [x] T091 [ML] Generate `model_vector` item embeddings post-train in `ml/training/export_item_embeddings.py`
+- [x] T092 Implement model loader in `apps/api/app/services/model_loader.py` (active version from `model_versions`)
+- [x] T093 Implement `RecommendationService` in `apps/api/app/services/recommendation_service.py` (retrieval top-200 → rank → streaming boost α=0.3)
+- [x] T094 Implement candidate filtering (exclude watched/disliked) in `apps/api/app/services/recommendation_service.py`
+- [x] T095 Implement cold-start path using onboarding genres + vector search in `apps/api/app/services/recommendation_service.py`
+- [x] T096 Implement trending fallback when model unavailable in `apps/api/app/services/recommendation_service.py`
+- [x] T097 [US6] Implement `GET /recommendations/for-you` in `apps/api/app/routers/recommendations.py`
+- [x] T098 [P] [US6] Create "For you" feed section in `apps/web/src/app/(main)/page.tsx`
+- [x] T099 [P] [US6] Create `apps/web/src/components/RecommendationFeed.tsx` with loading and fallback states
+- [x] T100 [US6] Integration test `apps/api/tests/integration/test_recommendations.py` with seeded user (≥5 likes per SC-003)
 
 **Checkpoint**: Personalized feed returns ranked titles; cold start and fallback behave per spec edge cases
 

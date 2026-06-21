@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+last_sync_status.json
+scheduler_status.json
+.venv/
+venv/

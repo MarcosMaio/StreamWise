@@ -1,0 +1,20 @@
+model:
+  embedding_dim: 64
+  user_vocab_size: 100000
+  item_vocab_size: 100000
+
+training:
+  batch_size: 1024
+  epochs: 3
+  learning_rate: 0.001
+  validation_split: 0.1
+  sample_size: 50000  # dev subset; set null for full MovieLens load
+
+data:
+  movielens_dir: ml/artifacts/movielens
+  positive_threshold: 4.0
+  negative_threshold: 2.0
+
+export:
+  artifact_dir: ml/artifacts/two_tower/v1
+  model_version: v1
