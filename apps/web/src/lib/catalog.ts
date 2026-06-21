@@ -35,6 +35,11 @@ export type TitleDetail = TitleSummary & {
   availability_note?: string | null;
 };
 
+export type CatalogFilters = {
+  providerIds?: string[];
+  genreIds?: string[];
+};
+
 function authToken(): string {
   const token = getAuthTokenClient();
   if (!token) {
@@ -43,18 +48,29 @@ function authToken(): string {
   return token;
 }
 
+function appendFilterParams(params: URLSearchParams, filters?: CatalogFilters) {
+  filters?.providerIds?.forEach((id) => params.append("provider_ids", id));
+  filters?.genreIds?.forEach((id) => params.append("genre_ids", id));
+}
+
 export async function fetchTrending(
   type: "movie" | "series" | "all" = "all",
   limit = 20,
+  filters?: CatalogFilters,
 ): Promise<TitleListResponse> {
   const params = new URLSearchParams({ type, limit: String(limit) });
+  appendFilterParams(params, filters);
   return apiClient<TitleListResponse>(`/catalog/trending?${params}`, {
     token: authToken(),
   });
 }
 
-export async function fetchNewReleases(limit = 20): Promise<TitleListResponse> {
+export async function fetchNewReleases(
+  limit = 20,
+  filters?: CatalogFilters,
+): Promise<TitleListResponse> {
   const params = new URLSearchParams({ limit: String(limit) });
+  appendFilterParams(params, filters);
   return apiClient<TitleListResponse>(`/catalog/new?${params}`, {
     token: authToken(),
   });

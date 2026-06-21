@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import { TitleCard } from "@/components/TitleCard";
+import { ProviderFilter } from "@/components/ProviderFilter";
 import { RecommendationFeed } from "@/components/RecommendationFeed";
+import { TitleCard } from "@/components/TitleCard";
 import { fetchCurrentUser, logout, type AuthUser } from "@/lib/auth";
 import { fetchNewReleases, fetchTrending, type TitleListResponse } from "@/lib/catalog";
+import { fetchProviders, type ProviderOption } from "@/lib/onboarding";
 import { fetchForYouFeed, type RecommendationListResponse } from "@/lib/recommendations";
 
 function TitleRow({ label, data }: { label: string; data: TitleListResponse | null }) {
@@ -22,9 +24,7 @@ function TitleRow({ label, data }: { label: string; data: TitleListResponse | nu
     return (
       <section className="space-y-4">
         <h2 className="text-xl font-semibold">{label}</h2>
-        <p className="text-sm text-streamwise-muted">
-          No titles yet. Run the TMDB sync job to populate the catalog.
-        </p>
+        <p className="text-sm text-streamwise-muted">No titles match the selected platforms.</p>
       </section>
     );
   }
@@ -43,6 +43,8 @@ function TitleRow({ label, data }: { label: string; data: TitleListResponse | nu
 
 export default function HomePage() {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [providers, setProviders] = useState<ProviderOption[]>([]);
+  const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
   const [trending, setTrending] = useState<TitleListResponse | null>(null);
   const [newReleases, setNewReleases] = useState<TitleListResponse | null>(null);
   const [forYou, setForYou] = useState<RecommendationListResponse | null>(null);
@@ -51,18 +53,19 @@ export default function HomePage() {
   const [staleNote, setStaleNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchCurrentUser()
-      .then(setUser)
-      .catch(() => setError("Unable to load your profile."));
+  const loadFeeds = useCallback(
+    async (providerIds: string[]) => {
+      const filters = { providerIds };
+      setForYouLoading(true);
+      setForYouError(null);
 
-    fetchForYouFeed()
-      .then(setForYou)
-      .catch(() => setForYouError("Unable to load personalized recommendations."))
-      .finally(() => setForYouLoading(false));
-
-    Promise.all([fetchTrending(), fetchNewReleases()])
-      .then(([trendingData, newData]) => {
+      try {
+        const [forYouData, trendingData, newData] = await Promise.all([
+          fetchForYouFeed(20, providerIds),
+          fetchTrending("all", 20, filters),
+          fetchNewReleases(20, filters),
+        ]);
+        setForYou(forYouData);
         setTrending(trendingData);
         setNewReleases(newData);
         const note =
@@ -72,9 +75,29 @@ export default function HomePage() {
             ? "Catalog data may be outdated."
             : null);
         setStaleNote(note ?? null);
-      })
-      .catch(() => setError("Unable to load catalog. Try signing in again."));
+      } catch {
+        setForYouError("Unable to load personalized recommendations.");
+        setError("Unable to load catalog. Try signing in again.");
+      } finally {
+        setForYouLoading(false);
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    fetchCurrentUser()
+      .then(setUser)
+      .catch(() => setError("Unable to load your profile."));
+
+    fetchProviders()
+      .then(setProviders)
+      .catch(() => setError("Unable to load streaming providers."));
   }, []);
+
+  useEffect(() => {
+    loadFeeds(selectedProviders);
+  }, [loadFeeds, selectedProviders]);
 
   function handleLogout() {
     logout();
@@ -104,6 +127,13 @@ export default function HomePage() {
             </div>
           ) : null}
         </div>
+
+        <ProviderFilter
+          providers={providers}
+          selectedIds={selectedProviders}
+          defaultSelectedIds={user?.streaming_provider_ids ?? []}
+          onChange={setSelectedProviders}
+        />
 
         {staleNote ? (
           <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-200">

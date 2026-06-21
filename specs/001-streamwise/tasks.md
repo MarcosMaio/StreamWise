@@ -219,10 +219,10 @@
 **Independent Test**: Netflix-only filter returns only Netflix-available titles in BR  
 **Spec**: US7 | **Planning**: P0 filter (may ship with MVP)
 
-- [ ] T101 [US7] Add `provider_ids` query param filtering to `GET /catalog/trending`, `/catalog/new`, `/recommendations/for-you` in respective routers
-- [ ] T102 [P] [US7] Create `apps/web/src/components/ProviderFilter.tsx` multi-select filter chip bar
-- [ ] T103 [US7] Create explore page `apps/web/src/app/explore/page.tsx` with genre + platform + type filters
-- [ ] T104 [US7] Pre-select onboarding providers as default filter in `apps/web/src/components/ProviderFilter.tsx`
+- [x] T101 [US7] Add `provider_ids` query param filtering to `GET /catalog/trending`, `/catalog/new`, `/recommendations/for-you` in respective routers
+- [x] T102 [P] [US7] Create `apps/web/src/components/ProviderFilter.tsx` multi-select filter chip bar
+- [x] T103 [US7] Create explore page `apps/web/src/app/explore/page.tsx` with genre + platform + type filters
+- [x] T104 [US7] Pre-select onboarding providers as default filter in `apps/web/src/components/ProviderFilter.tsx`
 
 **Checkpoint**: Platform filter works on home, explore, and for-you feed
 

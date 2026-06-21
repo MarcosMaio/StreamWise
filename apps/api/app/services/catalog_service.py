@@ -159,11 +159,32 @@ class CatalogService:
 
         return False, None
 
+    def _apply_provider_filter(self, query, provider_ids: list[UUID] | None):
+        if not provider_ids:
+            return query
+        return query.join(
+            TitleStreamingProvider,
+            TitleStreamingProvider.title_id == Title.id,
+        ).where(
+            TitleStreamingProvider.provider_id.in_(provider_ids),
+            TitleStreamingProvider.country_code == COUNTRY_CODE,
+            TitleStreamingProvider.availability_type == "flatrate",
+        )
+
+    def _apply_genre_filter(self, query, genre_ids: list[UUID] | None):
+        if not genre_ids:
+            return query
+        return query.join(TitleGenre, TitleGenre.title_id == Title.id).where(
+            TitleGenre.genre_id.in_(genre_ids)
+        )
+
     async def list_trending(
         self,
         *,
         title_type: Literal["movie", "series", "all"] = "all",
         limit: int = 20,
+        provider_ids: list[UUID] | None = None,
+        genre_ids: list[UUID] | None = None,
     ) -> TitleListResponse:
         query = (
             select(Title)
@@ -179,6 +200,8 @@ class CatalogService:
         )
         if title_type != "all":
             query = query.where(Title.type == title_type)
+        query = self._apply_genre_filter(query, genre_ids)
+        query = self._apply_provider_filter(query, provider_ids)
 
         result = await self._session.execute(query)
         titles = result.scalars().unique().all()
@@ -186,7 +209,13 @@ class CatalogService:
         items = [self._to_summary(title) for title in titles]
         return TitleListResponse(items=items, total=len(items), stale_data=stale, availability_note=note)
 
-    async def list_new_releases(self, *, limit: int = 20) -> TitleListResponse:
+    async def list_new_releases(
+        self,
+        *,
+        limit: int = 20,
+        provider_ids: list[UUID] | None = None,
+        genre_ids: list[UUID] | None = None,
+    ) -> TitleListResponse:
         query = (
             select(Title)
             .where(Title.is_new_release.is_(True))
@@ -199,6 +228,9 @@ class CatalogService:
             .order_by(Title.release_date.desc().nullslast(), Title.tmdb_popularity.desc())
             .limit(min(limit, 50))
         )
+        query = self._apply_genre_filter(query, genre_ids)
+        query = self._apply_provider_filter(query, provider_ids)
+
         result = await self._session.execute(query)
         titles = result.scalars().unique().all()
         stale, note = await self.get_stale_data_info()

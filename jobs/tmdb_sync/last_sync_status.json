@@ -1,0 +1,14 @@
+{
+  "started_at": "2026-06-19T02:18:01.542632+00:00",
+  "finished_at": "2026-06-19T02:18:34.603369+00:00",
+  "success": false,
+  "duration_seconds": 30.135930951999853,
+  "trending_movies": 0,
+  "trending_series": 0,
+  "new_movies": 0,
+  "new_series": 0,
+  "providers_synced": 0,
+  "errors": [
+    ""
+  ]
+}

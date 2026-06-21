@@ -20,8 +20,12 @@ function authToken(): string {
   return token;
 }
 
-export async function fetchForYouFeed(limit = 20): Promise<RecommendationListResponse> {
+export async function fetchForYouFeed(
+  limit = 20,
+  providerIds: string[] = [],
+): Promise<RecommendationListResponse> {
   const params = new URLSearchParams({ limit: String(limit) });
+  providerIds.forEach((id) => params.append("provider_ids", id));
   return apiClient<RecommendationListResponse>(`/recommendations/for-you?${params}`, {
     token: authToken(),
   });

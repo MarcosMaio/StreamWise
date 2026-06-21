@@ -1,4 +1,5 @@
 from typing import Literal
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
@@ -49,18 +50,31 @@ async def list_providers(
 async def get_trending(
     type: Literal["movie", "series", "all"] = Query(default="all"),
     limit: int = Query(default=20, ge=1, le=50),
+    provider_ids: list[UUID] | None = Query(default=None),
+    genre_ids: list[UUID] | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(get_current_user),
 ) -> TitleListResponse:
     service = CatalogService(db)
-    return await service.list_trending(title_type=type, limit=limit)
+    return await service.list_trending(
+        title_type=type,
+        limit=limit,
+        provider_ids=provider_ids,
+        genre_ids=genre_ids,
+    )
 
 
 @router.get("/new", response_model=TitleListResponse)
 async def get_new_releases(
     limit: int = Query(default=20, ge=1, le=50),
+    provider_ids: list[UUID] | None = Query(default=None),
+    genre_ids: list[UUID] | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(get_current_user),
 ) -> TitleListResponse:
     service = CatalogService(db)
-    return await service.list_new_releases(limit=limit)
+    return await service.list_new_releases(
+        limit=limit,
+        provider_ids=provider_ids,
+        genre_ids=genre_ids,
+    )
