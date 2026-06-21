@@ -13,6 +13,7 @@ from app.models.user import User
 from app.schemas.catalog import GenreListResponse, GenreOption, ProviderListResponse, ProviderOption
 from app.schemas.title import TitleListResponse
 from app.services.catalog_service import CatalogService
+from app.services.vector_search_service import VectorSearchService
 
 router = APIRouter(prefix="/catalog", tags=["catalog"])
 
@@ -74,6 +75,24 @@ async def get_new_releases(
 ) -> TitleListResponse:
     service = CatalogService(db)
     return await service.list_new_releases(
+        limit=limit,
+        provider_ids=provider_ids,
+        genre_ids=genre_ids,
+    )
+
+
+@router.get("/search", response_model=TitleListResponse)
+async def search_titles(
+    q: str = Query(min_length=1),
+    limit: int = Query(default=20, ge=1, le=50),
+    provider_ids: list[UUID] | None = Query(default=None),
+    genre_ids: list[UUID] | None = Query(default=None),
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> TitleListResponse:
+    service = VectorSearchService(db)
+    return await service.search_by_query(
+        q,
         limit=limit,
         provider_ids=provider_ids,
         genre_ids=genre_ids,

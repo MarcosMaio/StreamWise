@@ -234,9 +234,9 @@
 **Independent Test**: Search "short funny series" returns relevant filtered results  
 **Spec**: US8 | **Planning**: P1 NL search (basic search in P0/P2 phase)
 
-- [ ] T105 [US8] Implement `GET /catalog/search` in `apps/api/app/routers/catalog.py` (query embedding + vector search + filters)
-- [ ] T106 [P] [US8] Create search bar component `apps/web/src/components/SearchBar.tsx` on explore and home header
-- [ ] T107 [US8] Integration test `apps/api/tests/integration/test_search.py`
+- [x] T105 [US8] Implement `GET /catalog/search` in `apps/api/app/routers/catalog.py` (query embedding + vector search + filters)
+- [x] T106 [P] [US8] Create search bar component `apps/web/src/components/SearchBar.tsx` on explore and home header
+- [x] T107 [US8] Integration test `apps/api/tests/integration/test_search.py`
 
 **Checkpoint**: Text search returns semantically relevant titles
 

@@ -1,20 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useState } from "react";
 
 import { ProviderFilter } from "@/components/ProviderFilter";
+import { SearchBar } from "@/components/SearchBar";
 import { TitleCard } from "@/components/TitleCard";
 import {
   fetchTrending,
+  searchCatalog,
   type CatalogFilters,
   type TitleListResponse,
 } from "@/lib/catalog";
 import { fetchGenres, fetchProviders, type GenreOption, type ProviderOption } from "@/lib/onboarding";
 
-export default function ExplorePage() {
+function ExploreContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialQuery = searchParams.get("q") ?? "";
+
   const [providers, setProviders] = useState<ProviderOption[]>([]);
   const [genres, setGenres] = useState<GenreOption[]>([]);
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [titleType, setTitleType] = useState<"all" | "movie" | "series">("all");
@@ -31,6 +39,12 @@ export default function ExplorePage() {
     };
 
     try {
+      if (searchQuery.trim()) {
+        const data = await searchCatalog(searchQuery.trim(), 24, filters);
+        setResults(data);
+        return;
+      }
+
       const data = await fetchTrending(titleType, 24, filters);
       setResults(data);
     } catch {
@@ -38,7 +52,7 @@ export default function ExplorePage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedGenres, selectedProviders, titleType]);
+  }, [searchQuery, selectedGenres, selectedProviders, titleType]);
 
   useEffect(() => {
     Promise.all([fetchProviders(), fetchGenres()])
@@ -50,8 +64,16 @@ export default function ExplorePage() {
   }, []);
 
   useEffect(() => {
+    setSearchQuery(initialQuery);
+  }, [initialQuery]);
+
+  useEffect(() => {
     loadResults();
   }, [loadResults]);
+
+  function handleSearch(query: string) {
+    router.push(`/explore?q=${encodeURIComponent(query)}`);
+  }
 
   function toggleGenre(id: string) {
     setSelectedGenres((current) =>
@@ -61,14 +83,21 @@ export default function ExplorePage() {
 
   return (
     <div className="space-y-8">
-      <section className="space-y-2">
+      <section className="space-y-4">
         <Link href="/" className="text-sm text-streamwise-accent hover:underline">
           Back to home
         </Link>
-        <h1 className="text-3xl font-bold">Explore</h1>
-        <p className="text-streamwise-muted">
-          Filter trending titles by genre, type, and Brazil streaming availability.
-        </p>
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">Explore</h1>
+          <p className="text-streamwise-muted">
+            Search titles or filter trending catalog by genre, type, and streaming platform.
+          </p>
+        </div>
+        <SearchBar
+          initialQuery={searchQuery}
+          placeholder="Try: short funny series"
+          onSearch={handleSearch}
+        />
       </section>
 
       <ProviderFilter
@@ -78,53 +107,59 @@ export default function ExplorePage() {
         label="Platforms"
       />
 
-      <section className="space-y-2">
-        <p className="text-sm font-medium">Genres</p>
-        <div className="flex flex-wrap gap-2">
-          {genres.map((genre) => {
-            const selected = selectedGenres.includes(genre.id);
-            return (
-              <button
-                key={genre.id}
-                type="button"
-                onClick={() => toggleGenre(genre.id)}
-                className={`rounded-full px-4 py-2 text-sm transition ${
-                  selected
-                    ? "bg-streamwise-accent text-white"
-                    : "border border-white/10 bg-streamwise-surface text-streamwise-muted hover:border-streamwise-accent/40"
-                }`}
-              >
-                {genre.name}
-              </button>
-            );
-          })}
-        </div>
-      </section>
+      {!searchQuery ? (
+        <>
+          <section className="space-y-2">
+            <p className="text-sm font-medium">Genres</p>
+            <div className="flex flex-wrap gap-2">
+              {genres.map((genre) => {
+                const selected = selectedGenres.includes(genre.id);
+                return (
+                  <button
+                    key={genre.id}
+                    type="button"
+                    onClick={() => toggleGenre(genre.id)}
+                    className={`rounded-full px-4 py-2 text-sm transition ${
+                      selected
+                        ? "bg-streamwise-accent text-white"
+                        : "border border-white/10 bg-streamwise-surface text-streamwise-muted hover:border-streamwise-accent/40"
+                    }`}
+                  >
+                    {genre.name}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
 
-      <section className="space-y-2">
-        <p className="text-sm font-medium">Type</p>
-        <div className="flex flex-wrap gap-2">
-          {(["all", "movie", "series"] as const).map((value) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setTitleType(value)}
-              className={`rounded-full px-4 py-2 text-sm capitalize transition ${
-                titleType === value
-                  ? "bg-streamwise-accent text-white"
-                  : "border border-white/10 bg-streamwise-surface text-streamwise-muted hover:border-streamwise-accent/40"
-              }`}
-            >
-              {value}
-            </button>
-          ))}
-        </div>
-      </section>
+          <section className="space-y-2">
+            <p className="text-sm font-medium">Type</p>
+            <div className="flex flex-wrap gap-2">
+              {(["all", "movie", "series"] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setTitleType(value)}
+                  className={`rounded-full px-4 py-2 text-sm capitalize transition ${
+                    titleType === value
+                      ? "bg-streamwise-accent text-white"
+                      : "border border-white/10 bg-streamwise-surface text-streamwise-muted hover:border-streamwise-accent/40"
+                  }`}
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
+          </section>
+        </>
+      ) : null}
 
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
 
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold">Results</h2>
+        <h2 className="text-xl font-semibold">
+          {searchQuery ? `Results for “${searchQuery}”` : "Trending results"}
+        </h2>
         {loading ? (
           <p className="text-sm text-streamwise-muted">Loading titles…</p>
         ) : !results || results.items.length === 0 ? (
@@ -138,5 +173,13 @@ export default function ExplorePage() {
         )}
       </section>
     </div>
+  );
+}
+
+export default function ExplorePage() {
+  return (
+    <Suspense fallback={<p className="text-sm text-streamwise-muted">Loading explore…</p>}>
+      <ExploreContent />
+    </Suspense>
   );
 }

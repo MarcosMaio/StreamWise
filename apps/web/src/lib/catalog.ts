@@ -91,3 +91,15 @@ export async function fetchSimilarTitles(
     token: authToken(),
   });
 }
+
+export async function searchCatalog(
+  query: string,
+  limit = 20,
+  filters?: CatalogFilters,
+): Promise<TitleListResponse> {
+  const params = new URLSearchParams({ q: query, limit: String(limit) });
+  appendFilterParams(params, filters);
+  return apiClient<TitleListResponse>(`/catalog/search?${params}`, {
+    token: authToken(),
+  });
+}
