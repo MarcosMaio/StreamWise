@@ -265,16 +265,16 @@
 **Independent Test**: `ml/eval/evaluate.py` reports Precision@10 and NDCG@10 beating popularity baseline  
 **Planning ref**: §15 Success metrics, constitution ML quality gate
 
-- [ ] T113 [ML] Implement popularity baseline in `ml/eval/baselines.py`
-- [ ] T114 [ML] Implement content-only baseline (pgvector) in `ml/eval/baselines.py`
-- [ ] T115 [ML] Implement evaluation script `ml/eval/evaluate.py` (Precision@10, Recall@10, NDCG@10, Coverage)
-- [ ] T178 [ML] Add SC-004 platform affinity metric to `ml/eval/evaluate.py`: for users with 5+ likes on one dominant BR provider, assert ≥60% of top-10 "For you" titles available on that provider
-- [ ] T179 [ML] Add SC-005 genre overlap metric to `ml/eval/evaluate.py`: assert ≥70% of "More like this" results share ≥1 genre with source title when genre metadata exists
-- [ ] T116 [ML] Store eval metrics JSON into `model_versions.metrics` via `ml/eval/publish_metrics.py`
-- [ ] T117 [P] Add architecture diagram to root `README.md` (Mermaid: offline train, sync, online serve)
-- [ ] T118 [P] Document ML metrics results section in root `README.md` (placeholders until eval run)
-- [ ] T119 [P] Add API usage section to root `README.md` linking `specs/001-streamwise/contracts/openapi.yaml`
-- [ ] T120 Validate full quickstart path in `specs/001-streamwise/quickstart.md` end-to-end and fix gaps
+- [x] T113 [ML] Implement popularity baseline in `ml/eval/baselines.py`
+- [x] T114 [ML] Implement content-only baseline (pgvector) in `ml/eval/baselines.py`
+- [x] T115 [ML] Implement evaluation script `ml/eval/evaluate.py` (Precision@10, Recall@10, NDCG@10, Coverage)
+- [x] T178 [ML] Add SC-004 platform affinity metric to `ml/eval/evaluate.py`: for users with 5+ likes on one dominant BR provider, assert ≥60% of top-10 "For you" titles available on that provider
+- [x] T179 [ML] Add SC-005 genre overlap metric to `ml/eval/evaluate.py`: assert ≥70% of "More like this" results share ≥1 genre with source title when genre metadata exists
+- [x] T116 [ML] Store eval metrics JSON into `model_versions.metrics` via `ml/eval/publish_metrics.py`
+- [x] T117 [P] Add architecture diagram to root `README.md` (Mermaid: offline train, sync, online serve)
+- [x] T118 [P] Document ML metrics results section in root `README.md` (placeholders until eval run)
+- [x] T119 [P] Add API usage section to root `README.md` linking `specs/001-streamwise/contracts/openapi.yaml`
+- [x] T120 Validate full quickstart path in `specs/001-streamwise/quickstart.md` end-to-end and fix gaps
 
 **Checkpoint**: P0 MVP complete per constitution — metrics script runs (SC-007, SC-004, SC-005); sync health tracked (SC-006); README documents architecture
 

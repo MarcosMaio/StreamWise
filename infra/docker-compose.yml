@@ -153,6 +153,28 @@ services:
     networks:
       - streamwise
 
+  # ── Offline ML evaluation (MovieLens holdout) ──────────────────────────────
+  eval:
+    build:
+      context: ..
+      dockerfile: ml/eval/Dockerfile
+    container_name: streamwise-eval
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-streamwise}:${POSTGRES_PASSWORD:-streamwise}@postgres:5432/${POSTGRES_DB:-streamwise}
+    volumes:
+      - ../ml/eval:/workspace/ml/eval
+      - ../ml/training:/workspace/ml/training
+      - ../ml/artifacts:/workspace/ml/artifacts
+      - ../apps/api/app:/workspace/apps/api/app
+    working_dir: /workspace
+    command: ["python", "ml/eval/evaluate.py", "--config", "ml/eval/config.yaml"]
+    profiles:
+      - eval
+    networks:
+      - streamwise
+
 networks:
   streamwise:
     name: streamwise

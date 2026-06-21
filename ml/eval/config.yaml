@@ -1,0 +1,18 @@
+eval:
+  k: 10
+  min_train_likes: 5
+  positive_threshold: 4.0
+
+data:
+  movielens_dir: ml/artifacts/movielens
+
+artifacts:
+  two_tower_dir: ml/artifacts/two_tower/v1
+
+output:
+  metrics_path: ml/artifacts/eval/metrics.json
+
+quality_gates:
+  sc004_min_ratio: 0.60
+  sc005_min_ratio: 0.70
+  sc007_beats_popularity: true

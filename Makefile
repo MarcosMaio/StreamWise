@@ -1,7 +1,7 @@
 # StreamWise Docker commands (run from repo root or infra/)
 COMPOSE = docker compose -f infra/docker-compose.yml
 
-.PHONY: help up down build logs ps sync test-api clean
+.PHONY: help up down build logs ps sync test-api eval clean
 
 help:
 	@echo "StreamWise — Docker workflow"
@@ -14,6 +14,7 @@ help:
 	@echo "  make logs      Tail logs (all services)"
 	@echo "  make ps        Show running containers"
 	@echo "  make test-api  Run API integration tests in container"
+	@echo "  make eval      Run offline ML evaluation (MovieLens holdout)"
 	@echo "  make clean     Stop and remove volumes (destructive)"
 
 up:
@@ -39,6 +40,9 @@ ps:
 
 test-api:
 	$(COMPOSE) --profile test run --rm test-api
+
+eval:
+	$(COMPOSE) --profile eval run --rm --no-deps eval
 
 clean:
 	$(COMPOSE) down -v

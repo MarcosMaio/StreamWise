@@ -15,7 +15,7 @@ import pandas as pd
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-MOVIELENS_URL = "https://files.grouplens.org/pdatasets/movielens/ml-latest-small.zip"
+MOVIELENS_URL = "https://files.grouplens.org/datasets/movielens/ml-latest-small.zip"
 
 
 def download_and_extract(target_dir: Path) -> Path:
