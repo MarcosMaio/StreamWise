@@ -27,6 +27,9 @@ export default function RootLayout({
               <Link href="/explore" className="text-streamwise-muted hover:text-white">
                 Explore
               </Link>
+              <Link href="/profile" className="text-streamwise-muted hover:text-white">
+                Profile
+              </Link>
             </nav>
           </div>
         </header>

@@ -248,12 +248,12 @@
 **Independent Test**: After likes, profile shows affinity weights matching liked providers  
 **Spec**: US9
 
-- [ ] T108 [US9] Implement `GET /users/me` in `apps/api/app/routers/users.py`
-- [ ] T109 [US9] Implement `GET /users/me/likes` in `apps/api/app/routers/users.py`
-- [ ] T177 [US9] Implement `GET /users/me/watchlist` in `apps/api/app/routers/users.py` (FR-024; filter interactions where `event_type=watchlist`)
-- [ ] T110 [US9] Implement `GET /users/me/affinity` in `apps/api/app/routers/users.py`
-- [ ] T111 [P] [US9] Create profile page `apps/web/src/app/profile/page.tsx` (likes, watchlist via T177, genres, affinity chart)
-- [ ] T112 [P] [US9] Create `apps/web/src/components/AffinityChart.tsx` visualizing provider scores
+- [x] T108 [US9] Implement `GET /users/me` in `apps/api/app/routers/users.py`
+- [x] T109 [US9] Implement `GET /users/me/likes` in `apps/api/app/routers/users.py`
+- [x] T177 [US9] Implement `GET /users/me/watchlist` in `apps/api/app/routers/users.py` (FR-024; filter interactions where `event_type=watchlist`)
+- [x] T110 [US9] Implement `GET /users/me/affinity` in `apps/api/app/routers/users.py`
+- [x] T111 [P] [US9] Create profile page `apps/web/src/app/profile/page.tsx` (likes, watchlist via T177, genres, affinity chart)
+- [x] T112 [P] [US9] Create `apps/web/src/components/AffinityChart.tsx` visualizing provider scores
 
 **Checkpoint**: Profile reflects user taste and inferred streaming habits
 

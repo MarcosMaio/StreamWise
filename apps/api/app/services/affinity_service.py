@@ -7,7 +7,8 @@ from sqlalchemy.orm import selectinload
 
 from app.models.embedding import UserStreamingAffinity
 from app.models.interaction import Interaction
-from app.models.provider import TitleStreamingProvider
+from app.models.provider import StreamingProvider, TitleStreamingProvider
+from app.schemas.affinity import StreamingAffinity
 from app.services.catalog_service import COUNTRY_CODE
 
 
@@ -61,3 +62,20 @@ class AffinityService:
                     score=raw_score / score_sum,
                 )
             )
+
+    async def list_for_user(self, user_id: UUID) -> list[StreamingAffinity]:
+        result = await self.db.execute(
+            select(UserStreamingAffinity, StreamingProvider)
+            .join(StreamingProvider, StreamingProvider.id == UserStreamingAffinity.provider_id)
+            .where(UserStreamingAffinity.user_id == user_id)
+            .order_by(UserStreamingAffinity.score.desc())
+        )
+        rows = result.all()
+        return [
+            StreamingAffinity(
+                provider_id=affinity.provider_id,
+                provider_name=provider.name,
+                score=affinity.score,
+            )
+            for affinity, provider in rows
+        ]
