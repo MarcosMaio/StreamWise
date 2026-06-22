@@ -1,4 +1,5 @@
 import logging
+from typing import Literal
 from uuid import UUID
 
 from sqlalchemy import or_, select, text
@@ -8,9 +9,10 @@ from sqlalchemy.orm import selectinload
 from app.config import get_settings
 from app.models.embedding import TitleEmbedding
 from app.models.provider import TitleStreamingProvider
-from app.models.title import Title, TitleGenre
+from app.models.title import Genre, Title, TitleGenre
 from app.schemas.title import TitleListResponse
 from app.services.catalog_service import CatalogService
+from app.services.context_filter import duration_to_title_type, mood_to_genre_names
 from app.services.embedding_generator import EmbeddingGenerator
 
 logger = logging.getLogger(__name__)
@@ -68,10 +70,17 @@ class VectorSearchService:
         limit: int = 20,
         provider_ids: list[UUID] | None = None,
         genre_ids: list[UUID] | None = None,
+        title_type: Literal["movie", "series"] | None = None,
+        duration: Literal["short", "long"] | None = None,
+        mood: Literal["funny", "intense", "cozy", "thoughtful"] | None = None,
     ) -> TitleListResponse:
         cleaned = query.strip()
         if not cleaned:
             return TitleListResponse(items=[], total=0)
+
+        resolved_type = title_type or duration_to_title_type(duration)
+        mood_genre_ids = await self._resolve_mood_genre_ids(mood)
+        merged_genre_ids = list({*(genre_ids or []), *mood_genre_ids})
 
         try:
             settings = get_settings()
@@ -81,7 +90,8 @@ class VectorSearchService:
                 vector,
                 limit=limit,
                 provider_ids=provider_ids,
-                genre_ids=genre_ids,
+                genre_ids=merged_genre_ids or None,
+                title_type=resolved_type,
             )
             if results.items:
                 return results
@@ -92,8 +102,18 @@ class VectorSearchService:
             cleaned,
             limit=limit,
             provider_ids=provider_ids,
-            genre_ids=genre_ids,
+            genre_ids=merged_genre_ids or None,
+            title_type=resolved_type,
         )
+
+    async def _resolve_mood_genre_ids(
+        self, mood: Literal["funny", "intense", "cozy", "thoughtful"] | None
+    ) -> list[UUID]:
+        names = mood_to_genre_names(mood)
+        if not names:
+            return []
+        result = await self.db.execute(select(Genre.id).where(Genre.name.in_(names)))
+        return list(result.scalars().all())
 
     async def _search_by_content_vector(
         self,
@@ -102,6 +122,7 @@ class VectorSearchService:
         limit: int,
         provider_ids: list[UUID] | None,
         genre_ids: list[UUID] | None,
+        title_type: str | None = None,
     ) -> TitleListResponse:
         db_query = (
             select(Title)
@@ -115,6 +136,8 @@ class VectorSearchService:
             .order_by(TitleEmbedding.content_vector.cosine_distance(vector))
             .limit(min(limit, 50))
         )
+        if title_type:
+            db_query = db_query.where(Title.type == title_type)
         db_query = self.catalog._apply_genre_filter(db_query, genre_ids)
         db_query = self.catalog._apply_provider_filter(db_query, provider_ids)
 
@@ -131,6 +154,7 @@ class VectorSearchService:
         limit: int,
         provider_ids: list[UUID] | None,
         genre_ids: list[UUID] | None,
+        title_type: str | None = None,
     ) -> TitleListResponse:
         terms = [term for term in query.split() if term]
         if not terms:
@@ -154,6 +178,8 @@ class VectorSearchService:
             .order_by(Title.tmdb_popularity.desc())
             .limit(min(limit, 50))
         )
+        if title_type:
+            db_query = db_query.where(Title.type == title_type)
         db_query = self.catalog._apply_genre_filter(db_query, genre_ids)
         db_query = self.catalog._apply_provider_filter(db_query, provider_ids)
 

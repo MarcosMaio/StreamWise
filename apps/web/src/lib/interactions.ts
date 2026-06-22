@@ -34,3 +34,15 @@ export async function recordInteraction(
     body,
   });
 }
+
+export async function updateSeriesProgress(
+  titleId: string,
+  season: number,
+  episode: number,
+): Promise<{ title_id: string; season: number; episode: number }> {
+  return apiClient(`/titles/${titleId}/progress`, {
+    method: "PUT",
+    token: authToken(),
+    body: { season, episode },
+  });
+}

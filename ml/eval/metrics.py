@@ -52,3 +52,17 @@ def average_metric(values: list[float]) -> float:
     if not values:
         return 0.0
     return sum(values) / len(values)
+
+
+def genre_diversity_at_k(
+    recommended: Iterable[int],
+    item_genres: dict[int, set[str]],
+    k: int = 10,
+) -> float:
+    top_k = list(recommended)[:k]
+    if not top_k:
+        return 0.0
+    unique_genres: set[str] = set()
+    for item_id in top_k:
+        unique_genres.update(item_genres.get(item_id, set()))
+    return len(unique_genres) / len(top_k)

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 import { CommunityRating } from "@/components/CommunityRating";
 import { InteractionBar } from "@/components/InteractionBar";
+import { SeriesProgressForm } from "@/components/SeriesProgressForm";
 import { StreamingBadges } from "@/components/StreamingBadges";
 import { TitleCard } from "@/components/TitleCard";
 import {
@@ -121,6 +122,10 @@ export default function TitleDetailPage() {
               setTitle((current) => (current ? { ...current, ...updated } : current))
             }
           />
+
+          {title.type === "series" ? (
+            <SeriesProgressForm titleId={title.id} />
+          ) : null}
 
           <section className="space-y-2">
             <h2 className="text-lg font-semibold">Synopsis</h2>

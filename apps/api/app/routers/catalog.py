@@ -87,6 +87,9 @@ async def search_titles(
     limit: int = Query(default=20, ge=1, le=50),
     provider_ids: list[UUID] | None = Query(default=None),
     genre_ids: list[UUID] | None = Query(default=None),
+    type: Literal["movie", "series"] | None = Query(default=None),
+    duration: Literal["short", "long"] | None = Query(default=None),
+    mood: Literal["funny", "intense", "cozy", "thoughtful"] | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(get_current_user),
 ) -> TitleListResponse:
@@ -96,4 +99,7 @@ async def search_titles(
         limit=limit,
         provider_ids=provider_ids,
         genre_ids=genre_ids,
+        title_type=type,
+        duration=duration,
+        mood=mood,
     )

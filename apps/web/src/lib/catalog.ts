@@ -40,6 +40,12 @@ export type CatalogFilters = {
   genreIds?: string[];
 };
 
+export type SearchFilters = CatalogFilters & {
+  type?: "movie" | "series";
+  duration?: "short" | "long";
+  mood?: "funny" | "intense" | "cozy" | "thoughtful";
+};
+
 function authToken(): string {
   const token = getAuthTokenClient();
   if (!token) {
@@ -95,10 +101,13 @@ export async function fetchSimilarTitles(
 export async function searchCatalog(
   query: string,
   limit = 20,
-  filters?: CatalogFilters,
+  filters?: SearchFilters,
 ): Promise<TitleListResponse> {
   const params = new URLSearchParams({ q: query, limit: String(limit) });
   appendFilterParams(params, filters);
+  if (filters?.type) params.set("type", filters.type);
+  if (filters?.duration) params.set("duration", filters.duration);
+  if (filters?.mood) params.set("mood", filters.mood);
   return apiClient<TitleListResponse>(`/catalog/search?${params}`, {
     token: authToken(),
   });

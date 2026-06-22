@@ -5,10 +5,12 @@ import { useCallback, useEffect, useState } from "react";
 import { ProviderFilter } from "@/components/ProviderFilter";
 import { RecommendationFeed } from "@/components/RecommendationFeed";
 import { TitleCard } from "@/components/TitleCard";
+import { TonightModePrompt } from "@/components/TonightModePrompt";
 import { fetchCurrentUser, logout, type AuthUser } from "@/lib/auth";
 import { fetchNewReleases, fetchTrending, type TitleListResponse } from "@/lib/catalog";
 import { fetchProviders, type ProviderOption } from "@/lib/onboarding";
 import { fetchForYouFeed, type RecommendationListResponse } from "@/lib/recommendations";
+import { type TonightContext } from "@/lib/tonight-context";
 
 function TitleRow({ label, data }: { label: string; data: TitleListResponse | null }) {
   if (!data) {
@@ -52,16 +54,17 @@ export default function HomePage() {
   const [forYouLoading, setForYouLoading] = useState(true);
   const [staleNote, setStaleNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tonightContext, setTonightContext] = useState<TonightContext | null>(null);
 
   const loadFeeds = useCallback(
-    async (providerIds: string[]) => {
+    async (providerIds: string[], context: TonightContext | null) => {
       const filters = { providerIds };
       setForYouLoading(true);
       setForYouError(null);
 
       try {
         const [forYouData, trendingData, newData] = await Promise.all([
-          fetchForYouFeed(20, providerIds),
+          fetchForYouFeed(20, providerIds, context),
           fetchTrending("all", 20, filters),
           fetchNewReleases(20, filters),
         ]);
@@ -96,8 +99,8 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    loadFeeds(selectedProviders);
-  }, [loadFeeds, selectedProviders]);
+    loadFeeds(selectedProviders, tonightContext);
+  }, [loadFeeds, selectedProviders, tonightContext]);
 
   function handleLogout() {
     logout();
@@ -143,6 +146,8 @@ export default function HomePage() {
 
         {error ? <p className="text-sm text-red-400">{error}</p> : null}
       </section>
+
+      <TonightModePrompt onChange={setTonightContext} />
 
       <RecommendationFeed data={forYou} loading={forYouLoading} error={forYouError} />
 

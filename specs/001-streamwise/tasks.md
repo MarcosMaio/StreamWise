@@ -287,40 +287,40 @@
 
 ### 14A: Explainability on recommendation cards
 
-- [ ] T121 [P1+] Implement reason tag generator in `apps/api/app/services/explainability_service.py` (genre match, platform, trending, similar liked title)
-- [ ] T122 [P1+] Add `reason_tags` to `RecommendationItem` in `apps/api/app/schemas/recommendation.py` and populate in `recommendation_service.py`
-- [ ] T123 [P1+] Display reason tags in `apps/web/src/components/RecommendationFeed.tsx`
+- [x] T121 [P1+] Implement reason tag generator in `apps/api/app/services/explainability_service.py` (genre match, platform, trending, similar liked title)
+- [x] T122 [P1+] Add `reason_tags` to `RecommendationItem` in `apps/api/app/schemas/recommendation.py` and populate in `recommendation_service.py`
+- [x] T123 [P1+] Display reason tags in `apps/web/src/components/RecommendationFeed.tsx`
 
 ### 14B: Feed diversity (MMR)
 
-- [ ] T124 [P1+] Implement MMR reranker in `apps/api/app/services/mmr_reranker.py` using genre vectors
-- [ ] T125 [P1+] Integrate MMR as final step in `apps/api/app/services/recommendation_service.py` (λ configurable)
-- [ ] T126 [ML] [P1+] Add diversity metric to `ml/eval/evaluate.py` (genre variety in top-10)
+- [x] T124 [P1+] Implement MMR reranker in `apps/api/app/services/mmr_reranker.py` using genre vectors
+- [x] T125 [P1+] Integrate MMR as final step in `apps/api/app/services/recommendation_service.py` (λ configurable)
+- [x] T126 [ML] [P1+] Add diversity metric to `ml/eval/evaluate.py` (genre variety in top-10)
 
 ### 14C: Tonight mode (contextual recommendations)
 
-- [ ] T127 [P1+] Add session context schema (time budget, mood, company) in `apps/api/app/schemas/context.py`
-- [ ] T128 [P1+] Implement context filters in `apps/api/app/services/recommendation_service.py` before ranking
-- [ ] T129 [P1+] Create `apps/web/src/components/TonightModePrompt.tsx` on home feed
-- [ ] T130 [P1+] Persist tonight context in session storage via `apps/web/src/lib/tonight-context.ts`
+- [x] T127 [P1+] Add session context schema (time budget, mood, company) in `apps/api/app/schemas/context.py`
+- [x] T128 [P1+] Implement context filters in `apps/api/app/services/recommendation_service.py` before ranking
+- [x] T129 [P1+] Create `apps/web/src/components/TonightModePrompt.tsx` on home feed
+- [x] T130 [P1+] Persist tonight context in session storage via `apps/web/src/lib/tonight-context.ts`
 
 ### 14D: Natural language search enhancements
 
-- [ ] T131 [P1+] Extend `GET /catalog/search` with duration/type/mood filter params in `apps/api/app/routers/catalog.py`
-- [ ] T132 [P1+] Add example query chips UI in `apps/web/src/components/SearchBar.tsx` ("Short on Netflix", etc.)
+- [x] T131 [P1+] Extend `GET /catalog/search` with duration/type/mood filter params in `apps/api/app/routers/catalog.py`
+- [x] T132 [P1+] Add example query chips UI in `apps/web/src/components/SearchBar.tsx` ("Short on Netflix", etc.)
 
 ### 14E: Series progress & Continue watching
 
-- [ ] T133 [P1+] Implement `PUT /titles/{titleId}/progress` in `apps/api/app/routers/interactions.py` (season, episode)
-- [ ] T134 [P1+] Implement `GET /users/me/continue-watching` in `apps/api/app/routers/users.py`
-- [ ] T135 [P1+] Create `apps/web/src/app/(main)/continue/page.tsx` Continue Watching section
-- [ ] T136 [P1+] Add progress indicator on series cards in `apps/web/src/components/TitleCard.tsx`
+- [x] T133 [P1+] Implement `PUT /titles/{titleId}/progress` in `apps/api/app/routers/interactions.py` (season, episode)
+- [x] T134 [P1+] Implement `GET /users/me/continue-watching` in `apps/api/app/routers/users.py`
+- [x] T135 [P1+] Create `apps/web/src/app/(main)/continue/page.tsx` Continue Watching section
+- [x] T136 [P1+] Add progress indicator on series cards in `apps/web/src/components/TitleCard.tsx`
 
 ### 14F: ML metrics dashboard (admin/dev)
 
-- [ ] T137 [P1+] Create internal metrics API `GET /admin/metrics/recommendations` in `apps/api/app/routers/admin.py` (protected)
-- [ ] T138 [P1+] Create dashboard page `apps/web/src/app/admin/metrics/page.tsx` with charts (Precision@K, NDCG, baseline comparison)
-- [ ] T139 [P1+] Wire dashboard to latest `model_versions.metrics` JSON
+- [x] T137 [P1+] Create internal metrics API `GET /admin/metrics/recommendations` in `apps/api/app/routers/admin.py` (protected)
+- [x] T138 [P1+] Create dashboard page `apps/web/src/app/admin/metrics/page.tsx` with charts (Precision@K, NDCG, baseline comparison)
+- [x] T139 [P1+] Wire dashboard to latest `model_versions.metrics` JSON
 
 **Checkpoint**: StreamWise Plus features demonstrable per planning doc §13.4 package
 

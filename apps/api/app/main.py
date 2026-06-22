@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import get_settings
-from app.routers import auth, catalog, interactions, recommendations, titles, users
+from app.routers import admin, auth, catalog, interactions, recommendations, titles, users
 from app.schemas.common import ErrorResponse
 
 logger = logging.getLogger(__name__)
@@ -71,6 +71,7 @@ def create_app() -> FastAPI:
     app.include_router(interactions.router)
     app.include_router(recommendations.router)
     app.include_router(users.router)
+    app.include_router(admin.router)
 
     return app
 

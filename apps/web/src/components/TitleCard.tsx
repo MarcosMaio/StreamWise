@@ -2,12 +2,18 @@ import Link from "next/link";
 
 import type { TitleSummary } from "@/lib/catalog";
 
+type WatchProgress = {
+  season: number;
+  episode: number;
+};
+
 type TitleCardProps = {
   title: TitleSummary;
   href?: string;
+  progress?: WatchProgress;
 };
 
-export function TitleCard({ title, href }: TitleCardProps) {
+export function TitleCard({ title, href, progress }: TitleCardProps) {
   const typeLabel = title.type === "series" ? "Series" : "Movie";
 
   const card = (
@@ -29,6 +35,11 @@ export function TitleCard({ title, href }: TitleCardProps) {
         <span className="absolute left-2 top-2 rounded-md bg-black/70 px-2 py-0.5 text-xs font-medium uppercase tracking-wide">
           {typeLabel}
         </span>
+        {progress ? (
+          <span className="absolute bottom-2 left-2 rounded-md bg-streamwise-accent/90 px-2 py-0.5 text-xs font-medium text-white">
+            S{progress.season} E{progress.episode}
+          </span>
+        ) : null}
       </div>
       <div className="space-y-2 p-3">
         <h3 className="line-clamp-2 font-semibold leading-snug">{title.title}</h3>

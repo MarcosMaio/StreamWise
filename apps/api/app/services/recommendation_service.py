@@ -5,13 +5,18 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.config import get_settings
 from app.models.embedding import TitleEmbedding, UserEmbedding
-from app.models.interaction import Interaction, UserPreference
+from app.models.interaction import Interaction
 from app.models.provider import TitleStreamingProvider
-from app.models.title import Title, TitleGenre
+from app.models.title import Genre, Title, TitleGenre
 from app.models.user import User
+from app.schemas.context import SessionContext
 from app.schemas.recommendation import RecommendationItem, RecommendationListResponse
 from app.services.catalog_service import CatalogService, COUNTRY_CODE
+from app.services.context_filter import apply_session_context
+from app.services.explainability_service import ExplainabilityService
+from app.services.mmr_reranker import mmr_rerank
 from app.services.model_loader import ModelLoader
 
 logger = logging.getLogger(__name__)
@@ -25,6 +30,8 @@ class RecommendationService:
         self.db = db
         self.catalog = CatalogService(db)
         self.model_loader = ModelLoader(db)
+        self.explainability = ExplainabilityService()
+        self.settings = get_settings()
 
     async def get_for_you(
         self,
@@ -32,11 +39,13 @@ class RecommendationService:
         *,
         limit: int = 20,
         provider_ids: list[UUID] | None = None,
+        context: SessionContext | None = None,
     ) -> RecommendationListResponse:
         limit = min(limit, 50)
         excluded = await self._get_excluded_title_ids(user.id)
         liked_ids = await self._get_liked_title_ids(user.id)
         genre_ids = [pref.genre_id for pref in user.preferences]
+        user_genre_names = await self._get_user_genre_names(genre_ids)
         affinities = {row.provider_id: row.score for row in user.streaming_affinities}
 
         model_available = await self.model_loader.is_model_available()
@@ -53,6 +62,8 @@ class RecommendationService:
             fallback_used = True
             candidates = await self._trending_fallback(genre_ids, excluded, provider_ids)
 
+        candidates = apply_session_context(candidates, context)
+
         user_model_vector = await self._build_user_model_vector(user.id, liked_ids)
         user_content_vector = await self._build_user_content_vector(liked_ids)
 
@@ -63,13 +74,33 @@ class RecommendationService:
             affinities=affinities,
         )
 
+        ranked = mmr_rerank(ranked, limit=limit, lambda_param=self.settings.mmr_lambda)
+
         if not model_available and liked_ids:
             fallback_used = True
 
-        items = [
-            RecommendationItem(**self.catalog._to_summary(title).model_dump(), score=score)
-            for score, title in ranked[:limit]
-        ]
+        items: list[RecommendationItem] = []
+        for score, title in ranked[:limit]:
+            content_similarity = None
+            if user_content_vector and title.embedding and title.embedding.content_vector is not None:
+                content_similarity = 1.0 - _cosine_distance(
+                    user_content_vector, list(title.embedding.content_vector)
+                )
+
+            reason_tags = self.explainability.build_reason_tags(
+                title,
+                user_genre_names=user_genre_names,
+                affinities=affinities,
+                has_likes=bool(liked_ids),
+                content_similarity=content_similarity,
+            )
+            items.append(
+                RecommendationItem(
+                    **self.catalog._to_summary(title).model_dump(),
+                    score=score,
+                    reason_tags=reason_tags,
+                )
+            )
 
         if len(items) < limit and not liked_ids:
             extra = await self._cold_start_fill(
@@ -81,6 +112,12 @@ class RecommendationService:
             items.extend(extra)
 
         return RecommendationListResponse(items=items, fallback_used=fallback_used)
+
+    async def _get_user_genre_names(self, genre_ids: list[UUID]) -> set[str]:
+        if not genre_ids:
+            return set()
+        result = await self.db.execute(select(Genre.name).where(Genre.id.in_(genre_ids)))
+        return set(result.scalars().all())
 
     async def _get_excluded_title_ids(self, user_id: UUID) -> set[UUID]:
         result = await self.db.execute(

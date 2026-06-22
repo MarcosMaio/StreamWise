@@ -1,8 +1,6 @@
 import { apiClient } from "./api-client";
 import { fetchCurrentUser, getAuthTokenClient, type AuthUser } from "./auth";
-import type { TitleListResponse } from "./catalog";
-
-export type StreamingAffinity = {
+import type { TitleListResponse, TitleSummary } from "./catalog";
   provider_id: string;
   provider_name: string;
   score: number;
@@ -40,6 +38,40 @@ export async function fetchUserWatchlist(limit = 50): Promise<TitleListResponse>
 
 export async function fetchStreamingAffinity(): Promise<StreamingAffinityResponse> {
   return apiClient<StreamingAffinityResponse>("/users/me/affinity", {
+    token: authToken(),
+  });
+}
+
+export type ContinueWatchingItem = TitleSummary & {
+  season: number;
+  episode: number;
+};
+
+export type ContinueWatchingResponse = {
+  items: ContinueWatchingItem[];
+  total: number;
+};
+
+export async function fetchContinueWatching(limit = 20): Promise<ContinueWatchingResponse> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  return apiClient<ContinueWatchingResponse>(`/users/me/continue-watching?${params}`, {
+    token: authToken(),
+  });
+}
+
+export type ContinueWatchingItem = TitleSummary & {
+  season: number;
+  episode: number;
+};
+
+export type ContinueWatchingResponse = {
+  items: ContinueWatchingItem[];
+  total: number;
+};
+
+export async function fetchContinueWatching(limit = 20): Promise<ContinueWatchingResponse> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  return apiClient<ContinueWatchingResponse>(`/users/me/continue-watching?${params}`, {
     token: authToken(),
   });
 }

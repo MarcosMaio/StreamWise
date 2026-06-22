@@ -51,7 +51,21 @@ export function RecommendationFeed({ data, loading, error }: RecommendationFeedP
       </div>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         {data.items.map((item) => (
-          <TitleCard key={item.id} title={item} href={`/titles/${item.id}`} />
+          <div key={item.id} className="space-y-2">
+            <TitleCard title={item} href={`/titles/${item.id}`} />
+            {item.reason_tags && item.reason_tags.length > 0 ? (
+              <div className="flex flex-wrap gap-1 px-1">
+                {item.reason_tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full bg-white/5 px-2 py-0.5 text-[11px] text-streamwise-muted"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+          </div>
         ))}
       </div>
     </section>

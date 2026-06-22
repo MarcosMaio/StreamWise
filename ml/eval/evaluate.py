@@ -25,7 +25,14 @@ from baselines import (
     TwoTowerBaseline,
     build_holdout_split,
 )
-from metrics import average_metric, catalog_coverage, ndcg_at_k, precision_at_k, recall_at_k
+from metrics import (
+    average_metric,
+    catalog_coverage,
+    genre_diversity_at_k,
+    ndcg_at_k,
+    precision_at_k,
+    recall_at_k,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -43,24 +50,43 @@ def evaluate_baseline(
     recommendations: dict[int, list[int]],
     k: int,
     catalog_size: int,
+    item_genres: dict[int, set[str]] | None = None,
 ) -> dict[str, float]:
     precisions: list[float] = []
     recalls: list[float] = []
     ndcgs: list[float] = []
+    diversities: list[float] = []
 
     for user_id, relevant in split.test_relevant.items():
         recs = recommendations.get(user_id, [])
         precisions.append(precision_at_k(recs, relevant, k))
         recalls.append(recall_at_k(recs, relevant, k))
         ndcgs.append(ndcg_at_k(recs, relevant, k))
+        if item_genres is not None:
+            diversities.append(genre_diversity_at_k(recs, item_genres, k))
 
-    return {
+    result = {
         "precision_at_k": round(average_metric(precisions), 4),
         "recall_at_k": round(average_metric(recalls), 4),
         "ndcg_at_k": round(average_metric(ndcgs), 4),
         "coverage": round(catalog_coverage(recommendations, catalog_size, k), 4),
         "evaluated_users": len(split.test_relevant),
     }
+    if diversities:
+        result["genre_diversity_at_k"] = round(average_metric(diversities), 4)
+    return result
+
+
+def _build_item_genres(movies: pd.DataFrame) -> dict[int, set[str]]:
+    item_genres: dict[int, set[str]] = {}
+    for row in movies.itertuples(index=False):
+        movie_id = int(row.movieId)
+        raw_genres = str(getattr(row, "genres", "") or "")
+        if raw_genres in {"", "(no genres listed)"}:
+            item_genres[movie_id] = set()
+        else:
+            item_genres[movie_id] = set(raw_genres.split("|"))
+    return item_genres
 
 
 def run_movielens_eval(config: dict[str, Any]) -> dict[str, Any]:
@@ -89,6 +115,7 @@ def run_movielens_eval(config: dict[str, Any]) -> dict[str, Any]:
         raise SystemExit("No eligible users for holdout evaluation. Import more MovieLens ratings.")
 
     catalog_size = int(movies["movieId"].nunique())
+    item_genres = _build_item_genres(movies)
     results: dict[str, Any] = {
         "dataset": str(data_dir),
         "k": k,
@@ -118,6 +145,7 @@ def run_movielens_eval(config: dict[str, Any]) -> dict[str, Any]:
         recommendations=popularity_recs,
         k=k,
         catalog_size=catalog_size,
+        item_genres=item_genres,
     )
 
     content = ContentOnlyBaseline()
@@ -137,6 +165,7 @@ def run_movielens_eval(config: dict[str, Any]) -> dict[str, Any]:
         recommendations=content_recs,
         k=k,
         catalog_size=catalog_size,
+        item_genres=item_genres,
     )
 
     two_tower_path = Path(config["artifacts"]["two_tower_dir"]) / "item_embeddings.json"
@@ -158,6 +187,7 @@ def run_movielens_eval(config: dict[str, Any]) -> dict[str, Any]:
             recommendations=two_tower_recs,
             k=k,
             catalog_size=catalog_size,
+            item_genres=item_genres,
         )
     else:
         results["baselines"][two_tower.name] = {
@@ -403,7 +433,7 @@ def print_summary(report: dict[str, Any]) -> None:
     print(f"Catalog size:    {report['offline_eval']['catalog_size']}")
     print(f"Cutoff K:        {report['offline_eval']['k']}\n")
 
-    header = f"{'Baseline':<16} {'P@10':>8} {'R@10':>8} {'NDCG@10':>10} {'Coverage':>10}"
+    header = f"{'Baseline':<16} {'P@10':>8} {'R@10':>8} {'NDCG@10':>10} {'Coverage':>10} {'Diversity':>10}"
     print(header)
     print("-" * len(header))
     for name, metrics in report["offline_eval"]["baselines"].items():
@@ -415,7 +445,8 @@ def print_summary(report: dict[str, Any]) -> None:
             f"{metrics['precision_at_k']:>8.4f} "
             f"{metrics['recall_at_k']:>8.4f} "
             f"{metrics['ndcg_at_k']:>10.4f} "
-            f"{metrics['coverage']:>10.4f}"
+            f"{metrics['coverage']:>10.4f} "
+            f"{metrics.get('genre_diversity_at_k', 0.0):>10.4f}"
         )
 
     sc007 = report["offline_eval"].get("sc007", {})

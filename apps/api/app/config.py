@@ -44,6 +44,8 @@ class Settings(BaseSettings):
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     google_client_id: str = ""
     google_client_secret: str = ""
+    mmr_lambda: float = 0.7
+    admin_api_key: str = ""
 
 
 @lru_cache
