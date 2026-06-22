@@ -48,6 +48,24 @@ class TMDBClient:
     async def get_watch_providers(self, media_type: MediaType, tmdb_id: int) -> dict[str, Any]:
         return await self._get(f"/{media_type}/{tmdb_id}/watch/providers")
 
+    async def get_certification(self, media_type: MediaType, tmdb_id: int) -> str | None:
+        if media_type == "movie":
+            data = await self._get(f"/movie/{tmdb_id}/release_dates")
+            br = (data.get("results") or {}).get("BR") or {}
+            for entry in br.get("release_dates") or []:
+                cert = entry.get("certification")
+                if cert:
+                    return str(cert).upper()
+            return None
+
+        data = await self._get(f"/tv/{tmdb_id}/content_ratings")
+        for entry in data.get("results") or []:
+            if entry.get("iso_3166_1") == "BR":
+                rating = entry.get("rating")
+                if rating:
+                    return str(rating).upper()
+        return None
+
 
 def poster_url(poster_path: str | None) -> str | None:
     if not poster_path:

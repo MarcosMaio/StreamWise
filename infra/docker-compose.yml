@@ -96,6 +96,12 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-streamwise}:${POSTGRES_PASSWORD:-streamwise}@postgres:5432/${POSTGRES_DB:-streamwise}
       SYNC_STATUS_DIR: /var/lib/streamwise/sync
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-streamwise@localhost}
+      SMTP_USE_TLS: ${SMTP_USE_TLS:-true}
     volumes:
       - tmdb_sync_status:/var/lib/streamwise/sync
     depends_on:

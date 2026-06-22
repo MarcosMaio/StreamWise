@@ -35,4 +35,7 @@ class TitleListResponse(BaseModel):
 class TitleDetail(TitleSummary):
     tmdb_popularity: float = 0.0
     is_trending: bool = False
+    certification: str | None = None
     availability_note: str | None = None
+    rent_providers: list[StreamingProviderBadge] = Field(default_factory=list)
+    buy_providers: list[StreamingProviderBadge] = Field(default_factory=list)

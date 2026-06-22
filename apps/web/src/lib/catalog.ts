@@ -32,7 +32,10 @@ export type TitleListResponse = {
 export type TitleDetail = TitleSummary & {
   tmdb_popularity: number;
   is_trending: boolean;
+  certification?: string | null;
   availability_note?: string | null;
+  rent_providers?: StreamingProviderBadge[];
+  buy_providers?: StreamingProviderBadge[];
 };
 
 export type CatalogFilters = {
@@ -109,6 +112,28 @@ export async function searchCatalog(
   if (filters?.duration) params.set("duration", filters.duration);
   if (filters?.mood) params.set("mood", filters.mood);
   return apiClient<TitleListResponse>(`/catalog/search?${params}`, {
+    token: authToken(),
+  });
+}
+
+export type CatalogChangeItem = {
+  id: string;
+  title_id: string;
+  title_name: string;
+  provider_name: string;
+  change_type: "enter" | "leave";
+  availability_type: string;
+  detected_at: string;
+};
+
+export type CatalogChangeListResponse = {
+  items: CatalogChangeItem[];
+  total: number;
+};
+
+export async function fetchCatalogChanges(limit = 20): Promise<CatalogChangeListResponse> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  return apiClient<CatalogChangeListResponse>(`/catalog/changes?${params}`, {
     token: authToken(),
   });
 }

@@ -1,6 +1,8 @@
 import { apiClient } from "./api-client";
 import { fetchCurrentUser, getAuthTokenClient, type AuthUser } from "./auth";
 import type { TitleListResponse, TitleSummary } from "./catalog";
+
+export type StreamingAffinity = {
   provider_id: string;
   provider_name: string;
   score: number;
@@ -8,6 +10,17 @@ import type { TitleListResponse, TitleSummary } from "./catalog";
 
 export type StreamingAffinityResponse = {
   providers: StreamingAffinity[];
+};
+
+export type ImportWatchlistResult = {
+  imported: number;
+  skipped: number;
+  missing_tmdb_ids: number[];
+};
+
+export type ContentFilter = {
+  blocked_genre_ids: string[];
+  max_certification: string | null;
 };
 
 function authToken(): string {
@@ -59,19 +72,33 @@ export async function fetchContinueWatching(limit = 20): Promise<ContinueWatchin
   });
 }
 
-export type ContinueWatchingItem = TitleSummary & {
-  season: number;
-  episode: number;
-};
+export async function importWatchlistCsv(file: File): Promise<ImportWatchlistResult> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const token = authToken();
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+  const response = await fetch(`${baseUrl}/users/me/import/csv`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.detail ?? "Import failed");
+  }
+  return response.json();
+}
 
-export type ContinueWatchingResponse = {
-  items: ContinueWatchingItem[];
-  total: number;
-};
-
-export async function fetchContinueWatching(limit = 20): Promise<ContinueWatchingResponse> {
-  const params = new URLSearchParams({ limit: String(limit) });
-  return apiClient<ContinueWatchingResponse>(`/users/me/continue-watching?${params}`, {
+export async function fetchContentFilter(): Promise<ContentFilter> {
+  return apiClient<ContentFilter>("/users/me/content-filter", {
     token: authToken(),
+  });
+}
+
+export async function updateContentFilter(data: ContentFilter): Promise<ContentFilter> {
+  return apiClient<ContentFilter>("/users/me/content-filter", {
+    method: "PUT",
+    token: authToken(),
+    body: JSON.stringify(data),
   });
 }

@@ -11,11 +11,18 @@ from app.models.provider import StreamingProvider
 from app.models.title import Genre
 from app.models.user import User
 from app.schemas.catalog import GenreListResponse, GenreOption, ProviderListResponse, ProviderOption
+from app.schemas.catalog_changes import CatalogChangeItem, CatalogChangeListResponse
 from app.schemas.title import TitleListResponse
+from app.services.catalog_change_service import CatalogChangeService
 from app.services.catalog_service import CatalogService
+from app.services.parental_filter_service import ParentalFilterService
 from app.services.vector_search_service import VectorSearchService
 
 router = APIRouter(prefix="/catalog", tags=["catalog"])
+
+
+async def _load_content_filter(db: AsyncSession, user: User):
+    return await ParentalFilterService(db).load_for_user(user.id)
 
 
 @router.get("/genres", response_model=GenreListResponse)
@@ -54,14 +61,16 @@ async def get_trending(
     provider_ids: list[UUID] | None = Query(default=None),
     genre_ids: list[UUID] | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> TitleListResponse:
+    content_filter = await _load_content_filter(db, current_user)
     service = CatalogService(db)
     return await service.list_trending(
         title_type=type,
         limit=limit,
         provider_ids=provider_ids,
         genre_ids=genre_ids,
+        content_filter=content_filter,
     )
 
 
@@ -71,13 +80,15 @@ async def get_new_releases(
     provider_ids: list[UUID] | None = Query(default=None),
     genre_ids: list[UUID] | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> TitleListResponse:
+    content_filter = await _load_content_filter(db, current_user)
     service = CatalogService(db)
     return await service.list_new_releases(
         limit=limit,
         provider_ids=provider_ids,
         genre_ids=genre_ids,
+        content_filter=content_filter,
     )
 
 
@@ -103,3 +114,26 @@ async def search_titles(
         duration=duration,
         mood=mood,
     )
+
+
+@router.get("/changes", response_model=CatalogChangeListResponse)
+async def get_catalog_changes(
+    limit: int = Query(default=20, ge=1, le=50),
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> CatalogChangeListResponse:
+    service = CatalogChangeService(db)
+    rows = await service.list_recent_changes(limit=limit)
+    items = [
+        CatalogChangeItem(
+            id=row.id,
+            title_id=row.title_id,
+            title_name=row.title_name,
+            provider_name=row.provider_name,
+            change_type=row.change_type,
+            availability_type=row.availability_type,
+            detected_at=row.detected_at,
+        )
+        for row in rows
+    ]
+    return CatalogChangeListResponse(items=items, total=len(items))

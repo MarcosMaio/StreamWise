@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+  <body style="font-family: Arial, sans-serif; color: #111;">
+    <h1>Your StreamWise picks this week</h1>
+    <p>Hi {{ display_name }}, here are five titles we think you'll enjoy:</p>
+    <ul>
+      {% for item in recommendations %}
+      <li><strong>{{ item.title }}</strong> — {{ item.genres | join(", ") }}</li>
+      {% endfor %}
+    </ul>
+    <p>Open StreamWise to explore your full personalized feed.</p>
+  </body>
+</html>

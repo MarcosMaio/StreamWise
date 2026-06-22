@@ -171,6 +171,7 @@ async def run_sync(pages: int = 1) -> SyncRunResult:
             for title in unique_titles:
                 try:
                     await service.sync_watch_providers(title)
+                    await service.sync_certification(title)
                     result.providers_synced += 1
                 except Exception as exc:
                     msg = f"providers tmdb_id={title.tmdb_id}: {exc}"

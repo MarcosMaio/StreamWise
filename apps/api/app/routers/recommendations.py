@@ -10,6 +10,7 @@ from app.models.user import User
 from app.schemas.context import SessionContext
 from app.schemas.recommendation import RecommendationListResponse
 from app.services.recommendation_service import RecommendationService
+from app.services.bandit_service import BanditService
 
 router = APIRouter(prefix="/recommendations", tags=["recommendations"])
 
@@ -32,3 +33,15 @@ async def get_for_you_feed(
         provider_ids=provider_ids,
         context=context if any((time_budget, mood, company)) else None,
     )
+
+
+@router.post("/bandit/click")
+async def log_bandit_click(
+    title_id: UUID = Query(...),
+    exploration: bool = Query(default=False),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    service = BanditService(db)
+    await service.log_click(current_user.id, title_id, is_exploration=exploration)
+    return {"status": "logged"}

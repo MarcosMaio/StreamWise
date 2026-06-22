@@ -10,6 +10,7 @@ from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 if TYPE_CHECKING:
     from app.models.embedding import UserEmbedding, UserStreamingAffinity
     from app.models.interaction import Interaction, UserPreference, UserSeriesProgress
+    from app.models.p2 import UserContentFilter
 
 
 class User(Base, UUIDPrimaryKeyMixin, TimestampMixin):
@@ -27,6 +28,9 @@ class User(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     streaming_affinities: Mapped[list["UserStreamingAffinity"]] = relationship(back_populates="user")
     embedding: Mapped["UserEmbedding | None"] = relationship(back_populates="user", uselist=False)
     series_progress: Mapped[list["UserSeriesProgress"]] = relationship(back_populates="user")
+    content_filter: Mapped["UserContentFilter | None"] = relationship(
+        back_populates="user", uselist=False
+    )
 
 
 class OAuthAccount(Base, UUIDPrimaryKeyMixin):

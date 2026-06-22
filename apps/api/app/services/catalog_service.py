@@ -7,9 +7,11 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.models.p2 import UserContentFilter
 from app.models.provider import StreamingProvider, TitleStreamingProvider
 from app.models.title import Genre, Title, TitleGenre
 from app.schemas.title import StreamingProviderBadge, TitleDetail, TitleListResponse, TitleSummary
+from app.services.parental_filter_service import ParentalFilterService
 from app.services.tmdb_client import TMDBClient, poster_url, provider_logo_url, tmdb_media_type
 
 logger = logging.getLogger(__name__)
@@ -107,7 +109,6 @@ class CatalogService:
             return
 
         br_data = (data.get("results") or {}).get(COUNTRY_CODE) or {}
-        flatrate = br_data.get("flatrate") or []
 
         await self._session.execute(
             delete(TitleStreamingProvider).where(
@@ -116,34 +117,44 @@ class CatalogService:
             )
         )
 
-        for provider_data in flatrate:
-            tmdb_provider_id = provider_data.get("provider_id")
-            if tmdb_provider_id is None:
-                continue
+        for availability_type in ("flatrate", "rent", "buy"):
+            for provider_data in br_data.get(availability_type) or []:
+                tmdb_provider_id = provider_data.get("provider_id")
+                if tmdb_provider_id is None:
+                    continue
 
-            result = await self._session.execute(
-                select(StreamingProvider).where(
-                    StreamingProvider.tmdb_provider_id == tmdb_provider_id
+                result = await self._session.execute(
+                    select(StreamingProvider).where(
+                        StreamingProvider.tmdb_provider_id == tmdb_provider_id
+                    )
                 )
-            )
-            provider = result.scalar_one_or_none()
-            if provider is None:
-                provider = StreamingProvider(
-                    tmdb_provider_id=tmdb_provider_id,
-                    name=provider_data.get("provider_name") or f"Provider {tmdb_provider_id}",
-                    logo_path=provider_data.get("logo_path"),
-                )
-                self._session.add(provider)
-                await self._session.flush()
+                provider = result.scalar_one_or_none()
+                if provider is None:
+                    provider = StreamingProvider(
+                        tmdb_provider_id=tmdb_provider_id,
+                        name=provider_data.get("provider_name") or f"Provider {tmdb_provider_id}",
+                        logo_path=provider_data.get("logo_path"),
+                    )
+                    self._session.add(provider)
+                    await self._session.flush()
 
-            self._session.add(
-                TitleStreamingProvider(
-                    title_id=title.id,
-                    provider_id=provider.id,
-                    country_code=COUNTRY_CODE,
-                    availability_type="flatrate",
+                self._session.add(
+                    TitleStreamingProvider(
+                        title_id=title.id,
+                        provider_id=provider.id,
+                        country_code=COUNTRY_CODE,
+                        availability_type=availability_type,
+                    )
                 )
-            )
+
+    async def sync_certification(self, title: Title) -> None:
+        media = tmdb_media_type(title.type)
+        try:
+            certification = await self._tmdb.get_certification(media, title.tmdb_id)
+        except Exception:
+            logger.warning("Failed to fetch certification for tmdb_id=%s", title.tmdb_id)
+            return
+        title.certification = certification
 
     async def get_stale_data_info(self) -> tuple[bool, str | None]:
         result = await self._session.execute(select(func.max(Title.last_synced_at)))
@@ -185,6 +196,7 @@ class CatalogService:
         limit: int = 20,
         provider_ids: list[UUID] | None = None,
         genre_ids: list[UUID] | None = None,
+        content_filter: UserContentFilter | None = None,
     ) -> TitleListResponse:
         query = (
             select(Title)
@@ -205,6 +217,7 @@ class CatalogService:
 
         result = await self._session.execute(query)
         titles = result.scalars().unique().all()
+        titles = ParentalFilterService.apply_to_titles(titles, content_filter)
         stale, note = await self.get_stale_data_info()
         items = [self._to_summary(title) for title in titles]
         return TitleListResponse(items=items, total=len(items), stale_data=stale, availability_note=note)
@@ -215,6 +228,7 @@ class CatalogService:
         limit: int = 20,
         provider_ids: list[UUID] | None = None,
         genre_ids: list[UUID] | None = None,
+        content_filter: UserContentFilter | None = None,
     ) -> TitleListResponse:
         query = (
             select(Title)
@@ -233,6 +247,7 @@ class CatalogService:
 
         result = await self._session.execute(query)
         titles = result.scalars().unique().all()
+        titles = ParentalFilterService.apply_to_titles(titles, content_filter)
         stale, note = await self.get_stale_data_info()
         items = [self._to_summary(title) for title in titles]
         return TitleListResponse(items=items, total=len(items), stale_data=stale, availability_note=note)
@@ -254,12 +269,31 @@ class CatalogService:
 
         summary = self._to_summary(title)
         _, note = await self.get_stale_data_info()
+        rent_providers = self._providers_by_type(title, "rent")
+        buy_providers = self._providers_by_type(title, "buy")
         return TitleDetail(
             **summary.model_dump(),
             tmdb_popularity=title.tmdb_popularity,
             is_trending=title.is_trending,
+            certification=title.certification,
             availability_note=note,
+            rent_providers=rent_providers,
+            buy_providers=buy_providers,
         )
+
+    def _providers_by_type(self, title: Title, availability_type: str) -> list[StreamingProviderBadge]:
+        return [
+            StreamingProviderBadge(
+                id=link.provider.id,
+                name=link.provider.name,
+                logo_url=provider_logo_url(link.provider.logo_path),
+                availability_type=link.availability_type,
+            )
+            for link in title.streaming_providers
+            if link.country_code == COUNTRY_CODE
+            and link.availability_type == availability_type
+            and link.provider
+        ]
 
     def _to_summary(self, title: Title) -> TitleSummary:
         genres = [tg.genre.name for tg in title.title_genres if tg.genre]

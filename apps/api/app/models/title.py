@@ -41,6 +41,8 @@ class Title(Base, UUIDPrimaryKeyMixin):
     is_new_release: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
     last_synced_at: Mapped[datetime | None] = mapped_column(nullable=True)
 
+    certification: Mapped[str | None] = mapped_column(String(10), nullable=True)
+
     title_genres: Mapped[list["TitleGenre"]] = relationship(back_populates="title")
     streaming_providers: Mapped[list["TitleStreamingProvider"]] = relationship(back_populates="title")
     interactions: Mapped[list["Interaction"]] = relationship(back_populates="title")

@@ -13,11 +13,13 @@ from app.models.title import Genre, Title, TitleGenre
 from app.models.user import User
 from app.schemas.context import SessionContext
 from app.schemas.recommendation import RecommendationItem, RecommendationListResponse
+from app.services.bandit_service import BanditService
 from app.services.catalog_service import CatalogService, COUNTRY_CODE
 from app.services.context_filter import apply_session_context
 from app.services.explainability_service import ExplainabilityService
 from app.services.mmr_reranker import mmr_rerank
 from app.services.model_loader import ModelLoader
+from app.services.parental_filter_service import ParentalFilterService
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +34,8 @@ class RecommendationService:
         self.model_loader = ModelLoader(db)
         self.explainability = ExplainabilityService()
         self.settings = get_settings()
+        self.parental = ParentalFilterService(db)
+        self.bandit = BanditService(db)
 
     async def get_for_you(
         self,
@@ -47,6 +51,7 @@ class RecommendationService:
         genre_ids = [pref.genre_id for pref in user.preferences]
         user_genre_names = await self._get_user_genre_names(genre_ids)
         affinities = {row.provider_id: row.score for row in user.streaming_affinities}
+        content_filter = await self.parental.load_for_user(user.id)
 
         model_available = await self.model_loader.is_model_available()
         candidates = await self._retrieve_candidates(
@@ -63,6 +68,7 @@ class RecommendationService:
             candidates = await self._trending_fallback(genre_ids, excluded, provider_ids)
 
         candidates = apply_session_context(candidates, context)
+        candidates = self.parental.apply_to_titles(candidates, content_filter)
 
         user_model_vector = await self._build_user_model_vector(user.id, liked_ids)
         user_content_vector = await self._build_user_content_vector(liked_ids)
@@ -101,6 +107,13 @@ class RecommendationService:
                     reason_tags=reason_tags,
                 )
             )
+
+        items = await self.bandit.inject_exploration(
+            user.id,
+            items,
+            excluded=excluded,
+            limit=limit,
+        )
 
         if len(items) < limit and not liked_ids:
             extra = await self._cold_start_fill(

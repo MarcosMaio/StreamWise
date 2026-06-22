@@ -6,6 +6,7 @@ from app.schemas.title import TitleSummary
 class RecommendationItem(TitleSummary):
     score: float = 0.0
     reason_tags: list[str] = Field(default_factory=list)
+    exploration: bool = False
 
 
 class RecommendationListResponse(BaseModel):

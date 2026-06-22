@@ -333,39 +333,39 @@
 
 ### 15A: Import watchlist (Trakt / CSV)
 
-- [ ] T140 [P2+] Implement CSV import parser in `apps/api/app/services/import_service.py`
-- [ ] T141 [P2+] Implement Trakt OAuth integration stub in `apps/api/app/routers/integrations.py` (optional env-gated)
-- [ ] T142 [P2+] Create import UI `apps/web/src/app/profile/import/page.tsx`
+- [x] T140 [P2+] Implement CSV import parser in `apps/api/app/services/import_service.py`
+- [x] T141 [P2+] Implement Trakt OAuth integration stub in `apps/api/app/routers/integrations.py` (optional env-gated)
+- [x] T142 [P2+] Create import UI `apps/web/src/app/profile/import/page.tsx`
 
 ### 15B: Weekly email digest
 
-- [ ] T143 [P2+] Create digest job `jobs/email/weekly_digest.py` (top 5 recommendations per user)
-- [ ] T144 [P2+] Add email template `jobs/email/templates/weekly_digest.html`
-- [ ] T145 [P2+] Add SMTP settings to `infra/.env.example` and scheduler trigger in `infra/docker-compose.yml`
+- [x] T143 [P2+] Create digest job `jobs/email/weekly_digest.py` (top 5 recommendations per user)
+- [x] T144 [P2+] Add email template `jobs/email/templates/weekly_digest.html`
+- [x] T145 [P2+] Add SMTP settings to `infra/.env.example` and scheduler trigger in `infra/docker-compose.yml`
 
 ### 15C: Multi-Armed Bandit exploration slots
 
-- [ ] T146 [P2+] Implement exploration slot injector (10–20% random catalog) in `apps/api/app/services/bandit_service.py`
-- [ ] T147 [P2+] Integrate bandit into `GET /recommendations/for-you` response with `exploration` flag per item
-- [ ] T148 [ML] [P2+] Log exploration impressions/clicks for offline analysis in `apps/api/app/models/bandit_event.py`
+- [x] T146 [P2+] Implement exploration slot injector (10–20% random catalog) in `apps/api/app/services/bandit_service.py`
+- [x] T147 [P2+] Integrate bandit into `GET /recommendations/for-you` response with `exploration` flag per item
+- [x] T148 [ML] [P2+] Log exploration impressions/clicks for offline analysis in `apps/api/app/models/bandit_event.py`
 
 ### 15D: Parental filter
 
-- [ ] T149 [P2+] Store TMDB certification on titles via sync extension in `jobs/tmdb_sync/sync_catalog.py`
-- [ ] T150 [P2+] Add user content filter preferences in `apps/api/app/models/user.py` (blocked genres, max rating)
-- [ ] T151 [P2+] Apply parental filters in catalog and recommendation queries
+- [x] T149 [P2+] Store TMDB certification on titles via sync extension in `jobs/tmdb_sync/sync_catalog.py`
+- [x] T150 [P2+] Add user content filter preferences in `apps/api/app/models/user.py` (blocked genres, max rating)
+- [x] T151 [P2+] Apply parental filters in catalog and recommendation queries
 
 ### 15E: Price comparison (rent/buy vs flatrate)
 
-- [ ] T152 [P2+] Expose rent/buy availability types in `TitleDetail` schema and sync from TMDB
-- [ ] T153 [P2+] Create `apps/web/src/components/PriceBadge.tsx` showing subscription vs rental indicator
+- [x] T152 [P2+] Expose rent/buy availability types in `TitleDetail` schema and sync from TMDB
+- [x] T153 [P2+] Create `apps/web/src/components/PriceBadge.tsx` showing subscription vs rental indicator
 
 ### 15F: Weekly streaming catalog diff
 
-- [ ] T154 [P2+] Snapshot provider mappings daily in `jobs/tmdb_sync/snapshot_providers.py`
-- [ ] T155 [P2+] Implement diff job `jobs/tmdb_sync/diff_catalog.py` detecting enter/leave events
-- [ ] T156 [P2+] Create API `GET /catalog/changes` in `apps/api/app/routers/catalog.py`
-- [ ] T157 [P2+] Create UI section `apps/web/src/components/CatalogChanges.tsx` ("Left Prime, joined Netflix")
+- [x] T154 [P2+] Snapshot provider mappings daily in `jobs/tmdb_sync/snapshot_providers.py`
+- [x] T155 [P2+] Implement diff job `jobs/tmdb_sync/diff_catalog.py` detecting enter/leave events
+- [x] T156 [P2+] Create API `GET /catalog/changes` in `apps/api/app/routers/catalog.py`
+- [x] T157 [P2+] Create UI section `apps/web/src/components/CatalogChanges.tsx` ("Left Prime, joined Netflix")
 
 **Checkpoint**: P2 features available behind feature flags or dedicated pages
 

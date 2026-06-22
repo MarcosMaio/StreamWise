@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
+
 import { TitleCard } from "@/components/TitleCard";
-import type { RecommendationListResponse } from "@/lib/recommendations";
+import { logBanditClick, type RecommendationListResponse } from "@/lib/recommendations";
 
 type RecommendationFeedProps = {
   data: RecommendationListResponse | null;
@@ -52,19 +54,31 @@ export function RecommendationFeed({ data, loading, error }: RecommendationFeedP
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         {data.items.map((item) => (
           <div key={item.id} className="space-y-2">
-            <TitleCard title={item} href={`/titles/${item.id}`} />
-            {item.reason_tags && item.reason_tags.length > 0 ? (
-              <div className="flex flex-wrap gap-1 px-1">
-                {item.reason_tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full bg-white/5 px-2 py-0.5 text-[11px] text-streamwise-muted"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            ) : null}
+            <Link
+              href={`/titles/${item.id}`}
+              onClick={() => {
+                if (item.exploration) {
+                  void logBanditClick(item.id, true).catch(() => undefined);
+                }
+              }}
+            >
+              <TitleCard title={item} />
+            </Link>
+            <div className="flex flex-wrap gap-1 px-1">
+              {item.exploration ? (
+                <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-[11px] text-violet-200">
+                  Explore
+                </span>
+              ) : null}
+              {item.reason_tags?.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full bg-white/5 px-2 py-0.5 text-[11px] text-streamwise-muted"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
           </div>
         ))}
       </div>

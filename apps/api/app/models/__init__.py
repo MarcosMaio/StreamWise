@@ -4,6 +4,12 @@ from app.models.embedding import ModelVersion, TitleEmbedding, UserEmbedding, Us
 from app.models.interaction import Interaction, UserPreference, UserSeriesProgress
 from app.models.provider import StreamingProvider, TitleStreamingProvider
 from app.models.title import Genre, Title, TitleGenre
+from app.models.p2 import (
+    BanditEvent,
+    CatalogProviderChange,
+    ProviderAvailabilitySnapshot,
+    UserContentFilter,
+)
 from app.models.user import OAuthAccount, User
 
 __all__ = [
@@ -21,4 +27,8 @@ __all__ = [
     "UserEmbedding",
     "UserStreamingAffinity",
     "ModelVersion",
+    "UserContentFilter",
+    "BanditEvent",
+    "ProviderAvailabilitySnapshot",
+    "CatalogProviderChange",
 ]

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { CatalogChanges } from "@/components/CatalogChanges";
 import { ProviderFilter } from "@/components/ProviderFilter";
 import { RecommendationFeed } from "@/components/RecommendationFeed";
 import { TitleCard } from "@/components/TitleCard";
@@ -148,6 +149,8 @@ export default function HomePage() {
       </section>
 
       <TonightModePrompt onChange={setTonightContext} />
+
+      <CatalogChanges />
 
       <RecommendationFeed data={forYou} loading={forYouLoading} error={forYouError} />
 

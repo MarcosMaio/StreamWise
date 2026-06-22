@@ -6,6 +6,7 @@ import type { TonightContext } from "./tonight-context";
 export type RecommendationItem = TitleSummary & {
   score: number;
   reason_tags?: string[];
+  exploration?: boolean;
 };
 
 export type RecommendationListResponse = {
@@ -33,6 +34,17 @@ export async function fetchForYouFeed(
   if (context?.company) params.set("company", context.company);
 
   return apiClient<RecommendationListResponse>(`/recommendations/for-you?${params}`, {
+    token: authToken(),
+  });
+}
+
+export async function logBanditClick(titleId: string, exploration: boolean): Promise<void> {
+  const params = new URLSearchParams({
+    title_id: titleId,
+    exploration: String(exploration),
+  });
+  await apiClient<{ status: string }>(`/recommendations/bandit/click?${params}`, {
+    method: "POST",
     token: authToken(),
   });
 }

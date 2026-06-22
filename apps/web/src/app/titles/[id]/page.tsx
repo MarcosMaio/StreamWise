@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 import { CommunityRating } from "@/components/CommunityRating";
 import { InteractionBar } from "@/components/InteractionBar";
+import { PriceBadge } from "@/components/PriceBadge";
 import { SeriesProgressForm } from "@/components/SeriesProgressForm";
 import { StreamingBadges } from "@/components/StreamingBadges";
 import { TitleCard } from "@/components/TitleCard";
@@ -106,6 +107,18 @@ export default function TitleDetailPage() {
               ) : null}
             </div>
             <h1 className="text-3xl font-bold leading-tight">{title.title}</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <PriceBadge
+                flatrateProviders={title.streaming_providers.filter(
+                  (provider) => provider.availability_type === "flatrate",
+                )}
+                rentProviders={title.rent_providers ?? []}
+                buyProviders={title.buy_providers ?? []}
+              />
+              {title.certification ? (
+                <span className="text-xs text-streamwise-muted">Rating: {title.certification}</span>
+              ) : null}
+            </div>
             {title.genres.length > 0 ? (
               <p className="text-sm text-streamwise-muted">{title.genres.join(" · ")}</p>
             ) : null}
@@ -135,6 +148,24 @@ export default function TitleDetailPage() {
           </section>
 
           <StreamingBadges providers={title.streaming_providers} />
+
+          {(title.rent_providers?.length ?? 0) > 0 || (title.buy_providers?.length ?? 0) > 0 ? (
+            <section className="space-y-2">
+              <h2 className="text-lg font-semibold">Rent or buy</h2>
+              <div className="flex flex-wrap gap-2">
+                {[...(title.rent_providers ?? []), ...(title.buy_providers ?? [])].map(
+                  (provider) => (
+                    <span
+                      key={`${provider.id}-${provider.availability_type}`}
+                      className="rounded-lg border border-white/10 bg-streamwise-surface px-3 py-1 text-sm"
+                    >
+                      {provider.name} ({provider.availability_type})
+                    </span>
+                  ),
+                )}
+              </div>
+            </section>
+          ) : null}
         </div>
       </div>
 

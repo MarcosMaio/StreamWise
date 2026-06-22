@@ -46,6 +46,15 @@ class Settings(BaseSettings):
     google_client_secret: str = ""
     mmr_lambda: float = 0.7
     admin_api_key: str = ""
+    trakt_client_id: str = ""
+    trakt_client_secret: str = ""
+    trakt_redirect_uri: str = "http://localhost:3000/profile/import"
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = "streamwise@localhost"
+    smtp_use_tls: bool = True
 
 
 @lru_cache

@@ -92,6 +92,12 @@ export default function ProfilePage() {
           >
             Sign out
           </button>
+          <Link
+            href="/profile/import"
+            className="rounded-lg border border-streamwise-accent/40 px-4 py-2 text-sm text-streamwise-accent transition hover:bg-streamwise-accent/10"
+          >
+            Import watchlist
+          </Link>
         </div>
         {error ? <p className="text-sm text-red-400">{error}</p> : null}
       </section>
