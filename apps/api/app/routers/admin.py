@@ -15,12 +15,12 @@ async def require_admin(
     x_admin_token: str | None = Header(default=None),
     settings: Settings = Depends(get_settings),
 ) -> None:
-    if not settings.admin_api_key:
+    if not settings.admin_api_key.get_secret_value():
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Admin API is not configured",
         )
-    if x_admin_token != settings.admin_api_key:
+    if x_admin_token != settings.admin_api_key.get_secret_value():
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
 

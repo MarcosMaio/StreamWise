@@ -59,7 +59,16 @@ class UserPreferenceService:
 
         user.onboarding_complete = True
         await self.db.commit()
-        return await self._load_user(user.id)
+        user = await self._load_user(user.id)
+        pref_result = await self.db.execute(
+            select(UserPreference).where(UserPreference.user_id == user.id)
+        )
+        user.preferences = list(pref_result.scalars().all())
+        aff_result = await self.db.execute(
+            select(UserStreamingAffinity).where(UserStreamingAffinity.user_id == user.id)
+        )
+        user.streaming_affinities = list(aff_result.scalars().all())
+        return user
 
     async def _validate_genre_ids(self, genre_ids: list[uuid.UUID]) -> None:
         result = await self.db.execute(select(Genre.id).where(Genre.id.in_(genre_ids)))

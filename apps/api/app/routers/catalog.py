@@ -94,7 +94,7 @@ async def get_new_releases(
 
 @router.get("/search", response_model=TitleListResponse)
 async def search_titles(
-    q: str = Query(min_length=1),
+    q: str = Query(min_length=1, max_length=200),
     limit: int = Query(default=20, ge=1, le=50),
     provider_ids: list[UUID] | None = Query(default=None),
     genre_ids: list[UUID] | None = Query(default=None),

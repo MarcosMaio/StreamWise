@@ -16,9 +16,9 @@ class UserProfile(BaseModel):
 
 
 class PreferencesRequest(BaseModel):
-    genre_ids: list[uuid.UUID]
-    streaming_provider_ids: list[uuid.UUID]
-    seed_like_title_ids: list[uuid.UUID] = Field(default_factory=list)
+    genre_ids: list[uuid.UUID] = Field(min_length=1, max_length=20)
+    streaming_provider_ids: list[uuid.UUID] = Field(min_length=1, max_length=20)
+    seed_like_title_ids: list[uuid.UUID] = Field(default_factory=list, max_length=50)
 
     @field_validator("genre_ids")
     @classmethod

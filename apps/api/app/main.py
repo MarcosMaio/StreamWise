@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import Any
 
@@ -8,6 +9,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import get_settings
+from app.middleware.rate_limit import RateLimitMiddleware
 from app.routers import admin, auth, catalog, integrations, interactions, recommendations, titles, users
 from app.schemas.common import ErrorResponse
 
@@ -33,8 +35,15 @@ def create_app() -> FastAPI:
     )
 
     app.add_middleware(
+        RateLimitMiddleware,
+        enabled=settings.rate_limit_enabled,
+        auth_limit_per_minute=settings.rate_limit_auth_per_minute,
+        search_limit_per_minute=settings.rate_limit_search_per_minute,
+    )
+
+    app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3000"],
+        allow_origins=settings.cors_origin_list,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -50,9 +59,10 @@ def create_app() -> FastAPI:
         _: Request, exc: RequestValidationError
     ) -> JSONResponse:
         payload = ErrorResponse(detail="Validation error", code="validation_error")
+        safe_errors = json.loads(json.dumps(exc.errors(), default=str))
         return JSONResponse(
             status_code=422,
-            content={**payload.model_dump(), "errors": exc.errors()},
+            content={**payload.model_dump(), "errors": safe_errors},
         )
 
     @app.exception_handler(Exception)

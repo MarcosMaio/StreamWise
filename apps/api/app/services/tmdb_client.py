@@ -15,7 +15,7 @@ TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
 class TMDBClient:
     def __init__(self, settings: Settings | None = None) -> None:
         self._settings = settings or get_settings()
-        self._api_key = self._settings.tmdb_api_key
+        self._api_key = self._settings.tmdb_api_key.get_secret_value()
 
     def _params(self, extra: dict[str, Any] | None = None) -> dict[str, Any]:
         params = {"api_key": self._api_key, "language": "pt-BR"}

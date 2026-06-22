@@ -47,7 +47,7 @@ def _send_email(settings: Settings, to_email: str, html_body: str) -> None:
         if settings.smtp_use_tls:
             client.starttls()
         if settings.smtp_user:
-            client.login(settings.smtp_user, settings.smtp_password)
+            client.login(settings.smtp_user, settings.smtp_password.get_secret_value())
         client.sendmail(settings.smtp_from, [to_email], message.as_string())
 
 

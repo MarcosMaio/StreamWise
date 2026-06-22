@@ -5,24 +5,15 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from app.config import get_settings
-from app.db.base import Base
 from app.db.session import get_db
 from app.main import create_app
 import app.models  # noqa: F401
 
-_tables_created = False
-
 
 @pytest.fixture
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
-    global _tables_created
     settings = get_settings()
     engine = create_async_engine(settings.database_url)
-
-    if not _tables_created:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-        _tables_created = True
 
     async with engine.connect() as connection:
         transaction = await connection.begin()

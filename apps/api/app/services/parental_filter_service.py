@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.p2 import UserContentFilter
 from app.models.title import Title, TitleGenre
-from app.schemas.user import ContentFilterRequest, ContentFilterResponse
+from app.schemas.content_filter import ContentFilterRequest, ContentFilterResponse
 
 
 CERT_RANK = {"L": 0, "10": 1, "12": 2, "14": 3, "16": 4, "18": 5}

@@ -149,7 +149,7 @@ services:
       - .env
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-streamwise}:${POSTGRES_PASSWORD:-streamwise}@postgres:5432/${POSTGRES_DB:-streamwise}
-    command: ["python", "-m", "pytest", "tests/", "-v"]
+    command: ["sh", "-c", "alembic upgrade head && python -m pytest tests/ -v"]
     depends_on:
       postgres:
         condition: service_healthy

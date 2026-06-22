@@ -30,7 +30,7 @@ async def trakt_callback(
     code: str | None = None,
     settings: Settings = Depends(get_settings),
 ) -> dict:
-    if not settings.trakt_client_id or not settings.trakt_client_secret:
+    if not settings.trakt_client_id or not settings.trakt_client_secret.get_secret_value():
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Trakt integration is not configured",

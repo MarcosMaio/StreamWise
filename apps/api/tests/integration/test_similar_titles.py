@@ -103,8 +103,7 @@ async def test_similar_returns_closest_neighbors(
     data = response.json()
     assert data["total"] >= 1
     result_ids = [item["id"] for item in data["items"]]
-    assert str(neighbor.id) in result_ids
-    assert str(distant.id) not in result_ids
+    assert result_ids[0] == str(neighbor.id)
     assert str(source.id) not in result_ids
 
 

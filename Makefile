@@ -1,7 +1,7 @@
 # StreamWise Docker commands (run from repo root or infra/)
 COMPOSE = docker compose -f infra/docker-compose.yml
 
-.PHONY: help up down build logs ps sync test-api eval retrain clean
+.PHONY: help up down build logs ps sync test-api eval retrain test-e2e clean
 
 help:
 	@echo "StreamWise — Docker workflow"
@@ -16,6 +16,7 @@ help:
 	@echo "  make test-api  Run API integration tests in container"
 	@echo "  make eval      Run offline ML evaluation (MovieLens holdout)"
 	@echo "  make retrain   Run full retrain pipeline (MovieLens + platform likes)"
+	@echo "  make test-e2e  Run Playwright smoke test (stack must be up)"
 	@echo "  make clean     Stop and remove volumes (destructive)"
 
 up:
@@ -47,6 +48,10 @@ eval:
 
 retrain:
 	$(COMPOSE) --profile retrain run --rm retrain
+
+test-e2e:
+	cd apps/web && npm install && npx playwright install chromium
+	cd apps/web && PLAYWRIGHT_SKIP_WEBSERVER=1 npm run test:e2e
 
 clean:
 	$(COMPOSE) down -v

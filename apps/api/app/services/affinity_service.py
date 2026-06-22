@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload
 from app.models.embedding import UserStreamingAffinity
 from app.models.interaction import Interaction
 from app.models.provider import StreamingProvider, TitleStreamingProvider
+from app.models.title import Title
 from app.schemas.affinity import StreamingAffinity
 from app.services.catalog_service import COUNTRY_CODE
 

@@ -392,18 +392,18 @@
 **Purpose**: Production readiness, constitution compliance, final validation  
 **Planning ref**: §19 Out of scope verification, constitution testing
 
-- [ ] T164 [P] Add rate limiting middleware in `apps/api/app/middleware/rate_limit.py` for auth and search endpoints
-- [ ] T165 [P] Add CORS configuration for web origin in `apps/api/app/main.py`
-- [ ] T166 [P] Security review: ensure TMDB_API_KEY and JWT_SECRET never logged in `apps/api/app/config.py`
-- [ ] T167 [P] Add input validation audit across all Pydantic schemas in `apps/api/app/schemas/`
-- [ ] T168 Run full API integration test suite `apps/api/tests/integration/` and fix failures
-- [ ] T169 [P] Add Playwright smoke test `apps/web/tests/e2e/smoke.spec.ts` (login → home → detail → like)
-- [ ] T170 [P] Performance smoke: verify home and for-you meet SC-002 (<3s) and document results in `README.md`
-- [ ] T171 Align OpenAPI spec `specs/001-streamwise/contracts/openapi.yaml` with implemented routes (diff audit)
-- [ ] T172 [P] Add portfolio one-liner and bullet points from `docs/STREAMWISE-PLANNING.md` §16 to `README.md`
-- [ ] T173 Remove or archive dead code under `legacy/` with note in `legacy/README.md`
+- [x] T164 [P] Add rate limiting middleware in `apps/api/app/middleware/rate_limit.py` for auth and search endpoints
+- [x] T165 [P] Add CORS configuration for web origin in `apps/api/app/main.py`
+- [x] T166 [P] Security review: ensure TMDB_API_KEY and JWT_SECRET never logged in `apps/api/app/config.py`
+- [x] T167 [P] Add input validation audit across all Pydantic schemas in `apps/api/app/schemas/`
+- [x] T168 Run full API integration test suite `apps/api/tests/integration/` and fix failures
+- [x] T169 [P] Add Playwright smoke test `apps/web/tests/e2e/smoke.spec.ts` (login → home → detail → like)
+- [x] T170 [P] Performance smoke: verify home and for-you meet SC-002 (<3s) and document results in `README.md`
+- [x] T171 Align OpenAPI spec `specs/001-streamwise/contracts/openapi.yaml` with implemented routes (diff audit)
+- [x] T172 [P] Add portfolio one-liner and bullet points from `docs/STREAMWISE-PLANNING.md` §16 to `README.md`
+- [x] T173 Remove or archive dead code under `legacy/` with note in `legacy/README.md`
 - [x] T174 Run `/speckit.analyze` consistency check across spec, plan, tasks before `/speckit.implement`
-- [ ] T175 Tag release `v0.1.0-mvp` after P0 checkpoint validation
+- [x] T175 Tag release `v0.1.0-mvp` after P0 checkpoint validation
 
 **Checkpoint**: Project portfolio-ready; all P0 success criteria verifiable
 

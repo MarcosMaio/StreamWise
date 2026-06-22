@@ -15,6 +15,7 @@ COPY pyproject.toml README.md alembic.ini ./
 COPY app ./app
 COPY alembic ./alembic
 COPY scripts ./scripts
+COPY tests ./tests
 
 RUN pip install --upgrade pip && pip install ".[dev]"
 

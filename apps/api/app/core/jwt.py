@@ -26,7 +26,11 @@ def create_refresh_token(subject: UUID, settings: Settings) -> str:
 
 
 def decode_token(token: str, settings: Settings) -> dict[str, Any]:
-    return jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+    return jwt.decode(
+        token,
+        settings.jwt_secret.get_secret_value(),
+        algorithms=[settings.jwt_algorithm],
+    )
 
 
 def get_token_subject(token: str, settings: Settings) -> UUID:
@@ -58,4 +62,4 @@ def _create_token(
         "exp": expire,
         "type": token_type,
     }
-    return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+    return jwt.encode(payload, settings.jwt_secret.get_secret_value(), algorithm=settings.jwt_algorithm)

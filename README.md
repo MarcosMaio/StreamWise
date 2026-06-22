@@ -1,6 +1,16 @@
 # StreamWise
 
-**StreamWise** is a movie and series discovery platform with hybrid ML recommendations, vector search, TMDB live catalog, user auth, and Brazil streaming availability.
+**StreamWise** is a movie and series discovery platform with catalog synced via TMDB (trending and releases), authentication, community ratings, and hybrid feed (Two-Tower + pgvector) that personalizes recommendations based on likes and inferred streaming platform affinity (Netflix, Prime, etc.).
+
+## Portfolio highlights
+
+- Built daily ETL pipeline integrating TMDB API for live catalog with streaming availability (BR)
+- Implemented hybrid recommendation system: vector retrieval (pgvector) + Two-Tower ranking (TensorFlow)
+- Trained collaborative model on MovieLens; weekly retrain merges platform interactions
+- Inferred user ↔ streaming platform affinity from implicit likes
+- Applied diversity reranking (MMR) and explainability on suggestions
+
+_Demo metrics: see [ML evaluation](#ml-evaluation) below — replace placeholders after running `make eval`._
 
 ## Quick start (Docker)
 
@@ -29,6 +39,7 @@ Open:
 | `make test-api` | Run API tests in container |
 | `make eval` | Run offline ML evaluation (MovieLens holdout) |
 | `make retrain` | Retrain Two-Tower (MovieLens + platform likes) |
+| `make test-e2e` | Playwright smoke test (requires stack up) |
 | `make logs` | Tail container logs |
 
 ## Architecture
@@ -148,6 +159,30 @@ _Last run: MovieLens latest-small holdout (553 users). Re-run `make eval` after 
 | SC-006 — daily TMDB sync success | ≥95% | Logged by scheduler |
 
 Latest eval JSON: `ml/artifacts/eval/metrics.json` (also merged into `model_versions.metrics` when published).
+
+## Performance (SC-002)
+
+Target: home and For You API responses **< 3s** p95 with warm catalog and model artifacts loaded.
+
+Manual smoke (stack running):
+
+```bash
+# Authenticate and time For You (replace TOKEN)
+time curl -s -o /dev/null -w '%{time_total}\n' \
+  -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8000/recommendations/for-you?limit=20"
+
+time curl -s -o /dev/null -w '%{time_total}\n' \
+  -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8000/catalog/trending?limit=20"
+```
+
+| Endpoint | Local smoke (warm) | SC-002 target |
+|---|---|---|
+| `GET /catalog/trending` | ~0.1–0.5s | < 3s |
+| `GET /recommendations/for-you` | ~0.2–1.5s | < 3s |
+
+_Times vary with catalog size, cold model load, and hardware. Re-measure after `make init` on your machine._
 
 ## Documentation
 
