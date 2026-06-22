@@ -12,9 +12,15 @@ training:
 
 data:
   movielens_dir: ml/artifacts/movielens
+  platform_interactions_path: ml/artifacts/platform/interactions.parquet
+  merged_ratings_path: ml/artifacts/training/ratings_merged.parquet
   positive_threshold: 4.0
   negative_threshold: 2.0
 
 export:
   artifact_dir: ml/artifacts/two_tower/v1
   model_version: v1
+  versioned_artifacts: true
+
+retrain:
+  schedule_cron: "0 7 * * 0"  # Sunday 07:00 UTC

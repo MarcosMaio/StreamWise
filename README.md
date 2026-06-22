@@ -28,6 +28,7 @@ Open:
 | `make sync` | Manual TMDB catalog sync |
 | `make test-api` | Run API tests in container |
 | `make eval` | Run offline ML evaluation (MovieLens holdout) |
+| `make retrain` | Retrain Two-Tower (MovieLens + platform likes) |
 | `make logs` | Tail container logs |
 
 ## Architecture
@@ -108,7 +109,22 @@ Or via Make (uses the API container Python environment):
 
 ```bash
 make eval
+make retrain   # MovieLens + platform likes → new model version + MLflow run
 ```
+
+### Retrain pipeline (Phase 16)
+
+Weekly (scheduler Sun 07:00 UTC) or manual:
+
+```bash
+make retrain
+# or on host:
+python ml/training/retrain_pipeline.py
+```
+
+Steps: export platform likes → merge with MovieLens → train Two-Tower → export embeddings → register `model_versions`. MLflow runs are stored under `ml/artifacts/mlruns/` (see `ml/mlflow/config.yaml`).
+
+Research spikes for v2+: [docs/research/](docs/research/).
 
 ### Metrics results
 

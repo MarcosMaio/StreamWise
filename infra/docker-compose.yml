@@ -104,6 +104,7 @@ services:
       SMTP_USE_TLS: ${SMTP_USE_TLS:-true}
     volumes:
       - tmdb_sync_status:/var/lib/streamwise/sync
+      - ../ml/artifacts:/ml/artifacts
     depends_on:
       postgres:
         condition: service_healthy
@@ -178,6 +179,28 @@ services:
     command: ["python", "ml/eval/evaluate.py", "--config", "ml/eval/config.yaml"]
     profiles:
       - eval
+    networks:
+      - streamwise
+
+  # ── Offline model retrain (MovieLens + platform interactions) ─────────────
+  retrain:
+    build:
+      context: ..
+      dockerfile: jobs/tmdb_sync/Dockerfile
+    container_name: streamwise-retrain
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-streamwise}:${POSTGRES_PASSWORD:-streamwise}@postgres:5432/${POSTGRES_DB:-streamwise}
+    volumes:
+      - ../ml/artifacts:/ml/artifacts
+    working_dir: /
+    command: ["python", "/ml/training/retrain_pipeline.py", "--config", "/ml/training/config.yaml"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - retrain
     networks:
       - streamwise
 

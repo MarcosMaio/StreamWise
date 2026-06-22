@@ -20,5 +20,10 @@ RUN pip install --upgrade pip && pip install ".[ml]"
 WORKDIR /jobs/tmdb_sync
 COPY jobs/tmdb_sync /jobs/tmdb_sync
 COPY jobs/email /jobs/email
+COPY ml/training /ml/training
+COPY ml/mlflow /ml/mlflow
+COPY ml/eval /ml/eval
+
+RUN pip install --upgrade pip && pip install /ml/training
 
 CMD ["python", "scheduler.py"]

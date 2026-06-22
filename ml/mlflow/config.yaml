@@ -1,0 +1,6 @@
+# MLflow tracking configuration for StreamWise offline training.
+# Used by ml/training/train_two_tower.py and retrain_pipeline.py.
+
+tracking_uri: ml/artifacts/mlruns
+experiment_name: streamwise-two-tower
+registered_model_name: streamwise-two-tower

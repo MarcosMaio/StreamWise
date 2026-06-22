@@ -35,6 +35,12 @@ except ImportError:
     except ImportError:
         run_weekly_digest = None
 
+try:
+    sys.path.insert(0, "/ml/training")
+    from retrain_pipeline import run_pipeline as run_retrain_pipeline
+except ImportError:
+    run_retrain_pipeline = None
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
@@ -100,6 +106,23 @@ def _scheduled_digest() -> None:
     asyncio.run(run_weekly_digest())
 
 
+def _scheduled_retrain() -> None:
+    if run_retrain_pipeline is None:
+        logger.warning("Retrain pipeline module unavailable")
+        return
+
+    logger.info("Starting weekly model retrain")
+    try:
+        run_retrain_pipeline(
+            config_path=Path("/ml/training/config.yaml"),
+            skip_import=False,
+            skip_eval=True,
+            skip_publish=True,
+        )
+    except Exception as exc:
+        logger.exception("Weekly retrain failed: %s", exc)
+
+
 def main() -> None:
     scheduler = BlockingScheduler(timezone="UTC")
     scheduler.add_job(
@@ -116,8 +139,15 @@ def main() -> None:
         name="Weekly recommendation digest",
         replace_existing=True,
     )
+    scheduler.add_job(
+        _scheduled_retrain,
+        CronTrigger(day_of_week="sun", hour=7, minute=0),
+        id="weekly_model_retrain",
+        name="Weekly Two-Tower retrain",
+        replace_existing=True,
+    )
 
-    logger.info("StreamWise TMDB scheduler started — daily sync at 06:00 UTC")
+    logger.info("StreamWise scheduler started — daily sync 06:00 UTC, weekly retrain Sun 07:00 UTC")
     _scheduled_sync()
     scheduler.start()
 

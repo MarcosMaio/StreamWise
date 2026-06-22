@@ -376,12 +376,12 @@
 **Purpose**: Operational ML maturity and v2+ items from planning doc §13.3  
 **Planning ref**: §7.4 Retrain, §13.3 v2+
 
-- [ ] T158 [ML] Implement scheduled retrain script `ml/training/retrain_pipeline.py` merging MovieLens + platform interactions
-- [ ] T159 [ML] Integrate MLflow tracking in `ml/training/train_two_tower.py` (`ml/mlflow/` config)
-- [ ] T160 [ML] Implement weekly retrain cron in `infra/docker-compose.yml` scheduler service
-- [ ] T161 [P2+] Spike: document Neo4j graph recsys approach in `docs/research/graph-recsys-spike.md` (v2+ — no implementation required for MVP)
-- [ ] T162 [P2+] Spike: document A/B ranker testing approach in `docs/research/ab-testing-spike.md`
-- [ ] T163 [P2+] Spike: document fine-tune embeddings with likes in `docs/research/embedding-finetune-spike.md`
+- [x] T158 [ML] Implement scheduled retrain script `ml/training/retrain_pipeline.py` merging MovieLens + platform interactions
+- [x] T159 [ML] Integrate MLflow tracking in `ml/training/train_two_tower.py` (`ml/mlflow/` config)
+- [x] T160 [ML] Implement weekly retrain cron in `infra/docker-compose.yml` scheduler service
+- [x] T161 [P2+] Spike: document Neo4j graph recsys approach in `docs/research/graph-recsys-spike.md` (v2+ — no implementation required for MVP)
+- [x] T162 [P2+] Spike: document A/B ranker testing approach in `docs/research/ab-testing-spike.md`
+- [x] T163 [P2+] Spike: document fine-tune embeddings with likes in `docs/research/embedding-finetune-spike.md`
 
 **Checkpoint**: Retrain pipeline documented and runnable manually
 
