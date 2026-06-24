@@ -44,11 +44,47 @@ class CatalogService:
     def __init__(self, session: AsyncSession, tmdb: TMDBClient | None = None) -> None:
         self._session = session
         self._tmdb = tmdb or TMDBClient()
+        # In-memory index for the current sync run — avoids duplicate INSERT when the
+        # same tmdb_id appears in trending, now_playing, etc. before commit.
+        self._tmdb_cache: dict[int, Title] = {}
 
     async def clear_catalog_flags(self) -> None:
         await self._session.execute(
             update(Title).values(is_trending=False, is_new_release=False)
         )
+
+    async def _load_title_by_tmdb_id(self, tmdb_id: int) -> Title | None:
+        cached = self._tmdb_cache.get(tmdb_id)
+        if cached is not None:
+            return cached
+
+        result = await self._session.execute(select(Title).where(Title.tmdb_id == tmdb_id))
+        title = result.scalar_one_or_none()
+        if title is not None:
+            self._tmdb_cache[tmdb_id] = title
+        return title
+
+    def _apply_tmdb_fields(
+        self,
+        title: Title,
+        item: dict[str, Any],
+        media_type: Literal["movie", "series"],
+        *,
+        is_trending: bool,
+        is_new_release: bool,
+    ) -> None:
+        now = datetime.utcnow()
+        title.type = media_type
+        title.title = _title_name(item, media_type)
+        title.overview = item.get("overview")
+        title.release_date = _release_date(item, media_type)
+        title.poster_path = item.get("poster_path")
+        title.tmdb_popularity = float(item.get("popularity") or 0.0)
+        title.last_synced_at = now
+        if is_trending:
+            title.is_trending = True
+        if is_new_release:
+            title.is_new_release = True
 
     async def upsert_title_from_tmdb(
         self,
@@ -58,34 +94,29 @@ class CatalogService:
         is_trending: bool = False,
         is_new_release: bool = False,
     ) -> Title:
-        tmdb_id = item["id"]
-        result = await self._session.execute(select(Title).where(Title.tmdb_id == tmdb_id))
-        title = result.scalar_one_or_none()
-        now = datetime.utcnow()
-
-        fields = {
-            "type": media_type,
-            "title": _title_name(item, media_type),
-            "overview": item.get("overview"),
-            "release_date": _release_date(item, media_type),
-            "poster_path": item.get("poster_path"),
-            "tmdb_popularity": float(item.get("popularity") or 0.0),
-            "last_synced_at": now,
-        }
+        tmdb_id = int(item["id"])
+        title = await self._load_title_by_tmdb_id(tmdb_id)
 
         if title is None:
-            title = Title(tmdb_id=tmdb_id, is_trending=is_trending, is_new_release=is_new_release, **fields)
+            title = Title(
+                tmdb_id=tmdb_id,
+                is_trending=is_trending,
+                is_new_release=is_new_release,
+            )
+            self._apply_tmdb_fields(
+                title, item, media_type, is_trending=is_trending, is_new_release=is_new_release
+            )
             self._session.add(title)
+            self._tmdb_cache[tmdb_id] = title
+            await self._session.flush()
         else:
-            for key, value in fields.items():
-                setattr(title, key, value)
-            if is_trending:
-                title.is_trending = True
-            if is_new_release:
-                title.is_new_release = True
+            self._apply_tmdb_fields(
+                title, item, media_type, is_trending=is_trending, is_new_release=is_new_release
+            )
+            await self._session.flush()
 
-        await self._session.flush()
         await self._sync_genres(title, item.get("genre_ids") or [])
+        self._tmdb_cache[tmdb_id] = title
         return title
 
     async def _sync_genres(self, title: Title, genre_ids: list[int]) -> None:

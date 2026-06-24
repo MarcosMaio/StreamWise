@@ -45,6 +45,7 @@ class SyncRunResult:
     new_series: int = 0
     providers_synced: int = 0
     embeddings_generated: int = 0
+    duplicates_skipped: int = 0
     errors: list[str] = field(default_factory=list)
 
     @property
@@ -57,13 +58,33 @@ def _write_status(result: SyncRunResult) -> None:
 
     STATUS_FILE.write_text(json.dumps(asdict(result), indent=2))
     logger.info(
-        "sync_health status=%s titles=%d providers=%d duration=%.1fs errors=%d",
+        "sync_health status=%s titles=%d providers=%d duplicates_skipped=%d duration=%.1fs errors=%d",
         "success" if result.success else "failure",
         result.titles_synced,
         result.providers_synced,
+        result.duplicates_skipped,
         result.duration_seconds,
         len(result.errors),
     )
+
+
+def _dedupe_tmdb_items(items: list[dict]) -> tuple[list[dict], int]:
+    """Drop repeated TMDB ids within a single API response list."""
+    seen: set[int] = set()
+    unique: list[dict] = []
+    skipped = 0
+    for item in items:
+        tmdb_id = item.get("id")
+        if tmdb_id is None:
+            skipped += 1
+            continue
+        tmdb_id = int(tmdb_id)
+        if tmdb_id in seen:
+            skipped += 1
+            continue
+        seen.add(tmdb_id)
+        unique.append(item)
+    return unique, skipped
 
 
 async def _sync_list(
@@ -74,9 +95,17 @@ async def _sync_list(
     *,
     is_trending: bool,
     is_new_release: bool,
-) -> list:
+) -> tuple[list, int]:
+    unique_items, skipped = _dedupe_tmdb_items(items)
+    if skipped:
+        logger.info(
+            "Skipped %d duplicate %s entries in TMDB list",
+            skipped,
+            "series" if media_type == "tv" else "movie",
+        )
+
     synced = []
-    for item in items:
+    for item in unique_items:
         title = await service.upsert_title_from_tmdb(
             item,
             "series" if media_type == "tv" else "movie",
@@ -85,7 +114,7 @@ async def _sync_list(
         )
         synced.append(title)
     await session.flush()
-    return synced
+    return synced, skipped
 
 
 async def run_sync(pages: int = 1) -> SyncRunResult:
@@ -114,7 +143,7 @@ async def run_sync(pages: int = 1) -> SyncRunResult:
 
             for page in range(1, pages + 1):
                 trending_movies = await tmdb.get_trending("movie", page)
-                titles = await _sync_list(
+                titles, skipped = await _sync_list(
                     session,
                     service,
                     trending_movies.get("results") or [],
@@ -122,11 +151,12 @@ async def run_sync(pages: int = 1) -> SyncRunResult:
                     is_trending=True,
                     is_new_release=False,
                 )
+                result.duplicates_skipped += skipped
                 result.trending_movies += len(titles)
                 all_titles.extend(titles)
 
                 trending_tv = await tmdb.get_trending("tv", page)
-                titles = await _sync_list(
+                titles, skipped = await _sync_list(
                     session,
                     service,
                     trending_tv.get("results") or [],
@@ -134,11 +164,12 @@ async def run_sync(pages: int = 1) -> SyncRunResult:
                     is_trending=True,
                     is_new_release=False,
                 )
+                result.duplicates_skipped += skipped
                 result.trending_series += len(titles)
                 all_titles.extend(titles)
 
                 now_playing = await tmdb.get_now_playing(page)
-                titles = await _sync_list(
+                titles, skipped = await _sync_list(
                     session,
                     service,
                     now_playing.get("results") or [],
@@ -146,11 +177,12 @@ async def run_sync(pages: int = 1) -> SyncRunResult:
                     is_trending=False,
                     is_new_release=True,
                 )
+                result.duplicates_skipped += skipped
                 result.new_movies += len(titles)
                 all_titles.extend(titles)
 
                 on_the_air = await tmdb.get_on_the_air(page)
-                titles = await _sync_list(
+                titles, skipped = await _sync_list(
                     session,
                     service,
                     on_the_air.get("results") or [],
@@ -158,15 +190,17 @@ async def run_sync(pages: int = 1) -> SyncRunResult:
                     is_trending=False,
                     is_new_release=True,
                 )
+                result.duplicates_skipped += skipped
                 result.new_series += len(titles)
                 all_titles.extend(titles)
 
-            seen_ids = set()
+            seen_tmdb_ids: set[int] = set()
             unique_titles = []
             for title in all_titles:
-                if title.id not in seen_ids:
-                    seen_ids.add(title.id)
-                    unique_titles.append(title)
+                if title.tmdb_id in seen_tmdb_ids:
+                    continue
+                seen_tmdb_ids.add(title.tmdb_id)
+                unique_titles.append(title)
 
             for title in unique_titles:
                 try:
