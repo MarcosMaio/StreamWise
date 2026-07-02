@@ -70,7 +70,7 @@ class RecommendationService:
         candidates = apply_session_context(candidates, context)
         candidates = self.parental.apply_to_titles(candidates, content_filter)
 
-        user_model_vector = await self._build_user_model_vector(user.id, liked_ids)
+        user_model_vector, using_collaborative = await self._build_user_model_vector(user.id, liked_ids)
         user_content_vector = await self._build_user_content_vector(liked_ids)
 
         ranked = await self._rank_candidates(
@@ -99,6 +99,7 @@ class RecommendationService:
                 affinities=affinities,
                 has_likes=bool(liked_ids),
                 content_similarity=content_similarity,
+                used_collaborative=using_collaborative,
             )
             items.append(
                 RecommendationItem(
@@ -291,13 +292,18 @@ class RecommendationService:
         self,
         user_id: UUID,
         liked_ids: list[UUID],
-    ) -> list[float] | None:
+    ) -> tuple[list[float] | None, bool]:
+        """Return (vector, is_learned) where is_learned=True means we used the
+        actual Two-Tower user embedding (UserEmbedding.model_vector), not the
+        fallback average of liked items' vectors. The caller uses is_learned to
+        decide whether to show the 'similar taste' collaborative reason tag.
+        """
         user_embedding = await self.db.get(UserEmbedding, user_id)
         if user_embedding and user_embedding.model_vector is not None:
-            return list(user_embedding.model_vector)
+            return list(user_embedding.model_vector), True
 
         if not liked_ids:
-            return None
+            return None, False
 
         result = await self.db.execute(
             select(TitleEmbedding.model_vector).where(
@@ -306,7 +312,7 @@ class RecommendationService:
             )
         )
         vectors = [list(row[0]) for row in result.all()]
-        return _mean_vector(vectors)
+        return _mean_vector(vectors), False
 
     async def _rank_candidates(
         self,

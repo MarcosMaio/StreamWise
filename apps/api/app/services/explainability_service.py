@@ -13,8 +13,13 @@ class ExplainabilityService:
         affinities: dict[UUID, float],
         has_likes: bool,
         content_similarity: float | None = None,
+        used_collaborative: bool = False,
     ) -> list[str]:
         tags: list[str] = []
+
+        # Collaborative signal from Two-Tower: highest-value tag, shown first
+        if used_collaborative and has_likes:
+            tags.append("Liked by users with similar taste")
 
         title_genres = {tg.genre.name for tg in title.title_genres if tg.genre}
         overlap = user_genre_names.intersection(title_genres)

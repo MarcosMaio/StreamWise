@@ -41,6 +41,8 @@ try:
 except ImportError:
     run_retrain_pipeline = None
 
+RETRAIN_INTERACTION_THRESHOLD = int(os.environ.get("RETRAIN_INTERACTION_THRESHOLD", "500"))
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
@@ -82,6 +84,46 @@ def _record_run(result: SyncRunResult) -> None:
     )
 
 
+async def _interactions_since_last_retrain() -> int:
+    """Count new interactions since the most recently trained model version."""
+    import sys as _sys
+    from pathlib import Path as _Path
+
+    _sys.path.insert(0, str(_Path(__file__).resolve().parents[2] / "apps" / "api"))
+
+    from sqlalchemy import func, select
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+    from app.config import get_settings
+    from app.models.embedding import ModelVersion
+    from app.models.interaction import Interaction
+
+    settings = get_settings()
+    engine = create_async_engine(settings.database_url)
+    session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+    try:
+        async with session_factory() as session:
+            trained_at = (
+                await session.execute(
+                    select(ModelVersion.trained_at).order_by(ModelVersion.trained_at.desc()).limit(1)
+                )
+            ).scalar_one_or_none()
+
+            if trained_at is None:
+                return RETRAIN_INTERACTION_THRESHOLD  # no model yet → trigger immediately
+
+            count = (
+                await session.execute(
+                    select(func.count()).select_from(Interaction).where(Interaction.created_at > trained_at)
+                )
+            ).scalar() or 0
+    finally:
+        await engine.dispose()
+
+    return count
+
+
 def _scheduled_sync() -> None:
     import asyncio
 
@@ -94,6 +136,19 @@ def _scheduled_sync() -> None:
     if run_snapshot and run_diff:
         asyncio.run(run_snapshot())
         asyncio.run(run_diff())
+
+    try:
+        new_interactions = asyncio.run(_interactions_since_last_retrain())
+        logger.info(
+            "Interactions since last retrain: %d (threshold=%d)",
+            new_interactions,
+            RETRAIN_INTERACTION_THRESHOLD,
+        )
+        if new_interactions >= RETRAIN_INTERACTION_THRESHOLD:
+            logger.info("Interaction threshold reached — triggering retrain")
+            _scheduled_retrain()
+    except Exception as exc:
+        logger.warning("Interaction threshold check failed: %s", exc)
 
 
 def _scheduled_digest() -> None:
