@@ -27,6 +27,43 @@ def load_config(path: Path) -> dict:
         return yaml.safe_load(handle)
 
 
+# Above any real MovieLens movieId (latest-small tops out at 193609; the
+# full 25M dataset stays under this too) so backfilled IDs never collide
+# with a genuine MovieLens/TMDB bridge added later.
+BACKFILL_MOVIELENS_ID_OFFSET = 500_000
+
+
+async def backfill_movielens_ids(session) -> int:
+    """Assign a movielens_id to titles missing one.
+
+    Without this, titles synced from TMDB (which almost never overlap with
+    MovieLens movieIds) are silently excluded from export_platform_interactions
+    below, since that query filters on `Title.movielens_id IS NOT NULL`. The
+    assigned ID has no real MovieLens meaning — it only serves as the
+    integer item index the Two-Tower model trains on.
+    """
+    from sqlalchemy import select, update
+
+    from app.models.title import Title
+
+    result = await session.execute(select(Title).where(Title.movielens_id.is_(None)))
+    titles = result.scalars().all()
+    if not titles:
+        return 0
+
+    existing_result = await session.execute(select(Title.movielens_id))
+    existing_ids = [v for (v,) in existing_result.all() if v is not None]
+    next_id = max(existing_ids, default=BACKFILL_MOVIELENS_ID_OFFSET - 1) + 1
+
+    for offset, title in enumerate(titles):
+        await session.execute(
+            update(Title).where(Title.id == title.id).values(movielens_id=next_id + offset)
+        )
+    await session.commit()
+    logger.info("Backfilled movielens_id for %d titles", len(titles))
+    return len(titles)
+
+
 async def export_platform_interactions(output_path: Path) -> int:
     from sqlalchemy import select
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -41,9 +78,18 @@ async def export_platform_interactions(output_path: Path) -> int:
     session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     rows: list[dict] = []
-    user_offset = 2_000_000
+    # train_two_tower.py sizes the user embedding table by max(raw_id + 1,
+    # config_vocab_size), not a remapped dense index, so the offset directly
+    # drives training memory. Real MovieLens user IDs top out at 162541
+    # even in the full 25M dataset, so 200k clears them with headroom while
+    # staying far cheaper than the previous 2,000,000 offset (which alone
+    # cost ~1.5GB of embedding-table memory and contributed to an OOM kill
+    # during testing).
+    user_offset = 200_000
 
     async with session_factory() as session:
+        await backfill_movielens_ids(session)
+
         result = await session.execute(
             select(Interaction)
             .join(Title, Title.id == Interaction.title_id)
