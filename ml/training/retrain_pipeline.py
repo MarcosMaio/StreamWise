@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 import logging
 import subprocess
 import sys
@@ -132,6 +133,11 @@ async def export_platform_interactions(output_path: Path) -> int:
             output_path, index=False
         )
 
+    # Persist the UUID→int mapping so export_user_embeddings.py can map
+    # trained embedding indices back to DB user rows after training.
+    user_map_path = output_path.with_name("user_id_map.json")
+    with user_map_path.open("w") as fh:
+        json.dump(user_map, fh)
     logger.info("Exported %d platform interaction rows to %s", len(rows), output_path)
     return len(rows)
 
@@ -242,6 +248,21 @@ def run_pipeline(
             str(artifact_dir),
         ]
     )
+
+    user_map_path = platform_path.with_name("user_id_map.json")
+    if user_map_path.exists():
+        _run_step(
+            [
+                sys.executable,
+                str(training_dir / "export_user_embeddings.py"),
+                "--artifact-dir",
+                str(artifact_dir),
+                "--user-map",
+                str(user_map_path),
+            ]
+        )
+    else:
+        logger.warning("user_id_map.json not found at %s — skipping user embedding export", user_map_path)
 
     if not skip_eval:
         eval_script = REPO_ROOT / "ml/eval/evaluate.py"

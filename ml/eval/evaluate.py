@@ -89,6 +89,50 @@ def _build_item_genres(movies: pd.DataFrame) -> dict[int, set[str]]:
     return item_genres
 
 
+async def _get_active_model_path() -> str | None:
+    """Query model_versions for the active artifact path.
+
+    Uses the same DB pattern as publish_metrics.py so the eval always scores
+    the same model version that the API is serving, not a hardcoded directory.
+    Falls back to None (caller uses config YAML value) if the DB is unavailable.
+    """
+    from sqlalchemy import select
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+    from app.config import get_settings
+    from app.models.embedding import ModelVersion
+
+    settings = get_settings()
+    engine = create_async_engine(settings.database_url)
+    session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    try:
+        async with session_factory() as session:
+            result = await session.execute(
+                select(ModelVersion).where(ModelVersion.is_active.is_(True)).limit(1)
+            )
+            version = result.scalar_one_or_none()
+        return version.path if version else None
+    finally:
+        await engine.dispose()
+
+
+def _resolve_two_tower_dir(fallback: str) -> str:
+    """Return the active model's artifact dir from DB, or the config fallback.
+
+    Querying the DB keeps eval in sync with the serving layer after every
+    versioned retrain (e.g. v1-20260628). Without this, evaluate.py would
+    score stale embeddings and SC-007 would be silently wrong.
+    """
+    try:
+        path = asyncio.run(_get_active_model_path())
+        if path:
+            logger.info("Resolved Two-Tower dir from model_versions: %s", path)
+            return path
+    except Exception as exc:
+        logger.warning("Could not resolve active model from DB (%s); using config fallback", exc)
+    return fallback
+
+
 def run_movielens_eval(config: dict[str, Any]) -> dict[str, Any]:
     data_dir = Path(config["data"]["movielens_dir"])
     ratings_path = data_dir / "ratings.parquet"
@@ -168,7 +212,8 @@ def run_movielens_eval(config: dict[str, Any]) -> dict[str, Any]:
         item_genres=item_genres,
     )
 
-    two_tower_path = Path(config["artifacts"]["two_tower_dir"]) / "item_embeddings.json"
+    two_tower_dir = _resolve_two_tower_dir(config["artifacts"]["two_tower_dir"])
+    two_tower_path = Path(two_tower_dir) / "item_embeddings.json"
     two_tower = TwoTowerBaseline()
     two_tower.fit(two_tower_path)
     if two_tower.is_available:
@@ -189,6 +234,7 @@ def run_movielens_eval(config: dict[str, Any]) -> dict[str, Any]:
             catalog_size=catalog_size,
             item_genres=item_genres,
         )
+        results["baselines"][two_tower.name]["model_dir"] = str(two_tower_dir)
     else:
         results["baselines"][two_tower.name] = {
             "skipped": True,
